@@ -1,6 +1,6 @@
-from aimo import AIMO
+import uvicorn
+
+from server.server import app
 
 if __name__ == "__main__":
-    ai = AIMO()
-    reply = ai.get_response([{ "role": "user", "content": "I'm a bit sad today. The weather in London is really bad. It's always cloudy."}])
-    print(reply)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
