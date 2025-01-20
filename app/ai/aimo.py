@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -16,6 +18,13 @@ Usage:
     - Use the `get_response` method to asynchronously generate chat responses 
       based on input messages.
 """
+
+# logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s"  # log format
+)
+
 
 class AIMO:
     """
@@ -38,9 +47,11 @@ class AIMO:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         model_path = "OEvortex/HelpingAI2.5-2B"
         # Load tokenizer
+        logging.info("Loading tokenizer and model.")
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         # Load Model
         self.model = AutoModelForCausalLM.from_pretrained(model_path).to(self.device)
+        logging.info("Tokenizer and model loaded.")
 
     async def get_response(self, messages: list, temperature: float = 0.6, max_new_tokens: int = 100):
         """

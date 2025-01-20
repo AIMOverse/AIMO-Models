@@ -26,16 +26,17 @@ pip install -r requirements.txt
 Start the AIMO server using the following command:
 
 ```bash
-python main.py
+fastapi run app/main.py
 ```
 
 Once the server is running, you can integrate it with your applications or test it through API endpoints.
 
 ## API Overview
 
-The AIMO backend provides a RESTful API for interaction. Below is an example of the main endpoint:
+The AIMO backend provides a RESTful API for interaction. The version 1 of the server has a base url of /api/v1.
+Below is an example of the main endpoint:
 
-### Endpoint: `/chat/`
+### Endpoint: `/api/v1/chat/`
 
 #### Method: `POST`
 
