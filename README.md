@@ -33,10 +33,12 @@ Once the server is running, you can integrate it with your applications or test 
 
 ## API Overview
 
-The AIMO backend provides a RESTful API for interaction. The version 1 of the server has a base url of /api/v1.
+### Version: `1.0.0`
+
+The AIMO backend provides a RESTful API for interaction. The version 1.0.0 of the server has a base url of /api/v1.0.0.
 Below is an example of the main endpoint:
 
-### Endpoint: `/api/v1/chat/`
+### Endpoint: `/api/v1.0.0/chat/`
 
 #### Method: `POST`
 

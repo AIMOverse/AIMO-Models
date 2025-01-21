@@ -12,7 +12,7 @@ Description:
 
 
 class Settings(BaseSettings):
-    version = "1.0.0"
+    version:str = "1.0.0"
     API_V1_STR: str = f"/api/v{version}"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
