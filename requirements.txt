@@ -6,3 +6,5 @@ pydantic~=2.10.5
 pydantic_core~=2.27.2
 pydantic-settings~=2.7.1
 typing_extensions~=4.12.2
+pytest~=8.3.4
+pytest-cov~=6.0.0

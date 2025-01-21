@@ -31,6 +31,18 @@ fastapi run app/main.py
 
 Once the server is running, you can integrate it with your applications or test it through API endpoints.
 
+## Test
+
+Please Test the server before push!!!
+
+Test the server using the command below:
+
+```bash
+coverage run --source=app -m pytest
+coverage report --show-missing
+coverage html --title "${@-coverage}"
+```
+
 ## API Overview
 
 ### Version: `1.0.0`
