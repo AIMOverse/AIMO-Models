@@ -305,7 +305,7 @@ dmypy.json
 cython_debug/
 
 # Models
-app\ai\static\models\EmotionModule
+app/ai/static/models/EmotionModule/*
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
