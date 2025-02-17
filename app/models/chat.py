@@ -32,3 +32,6 @@ class ChatDto(BaseModel):
     messages: List[ChatItem]
     temperature: Union[float, None]
     max_new_tokens: Union[int, None]
+
+class HealthCheck(BaseModel):
+    status: str
