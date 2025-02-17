@@ -9,7 +9,7 @@ Description:
 """
 
 
-class ChatItem(BaseModel):
+class Message(BaseModel):
     """
     Represents an individual chat message.
 
@@ -25,11 +25,11 @@ class ChatDto(BaseModel):
     Represents the structure of the JSON body for the chat API request.
 
     Attributes:
-        messages (List[ChatItem]): A list of chat messages, where each message contains a role and its content.
+        messages (List[Message]): A list of chat messages, where each message contains a role and its content.
         temperature (float): A parameter controlling the randomness of the AI's response.
         max_new_tokens (int): The maximum number of tokens to generate in the AI's response.
     """
-    messages: List[ChatItem]
+    messages: List[Message]
     temperature: Union[float, None]
     max_new_tokens: Union[int, None]
 
