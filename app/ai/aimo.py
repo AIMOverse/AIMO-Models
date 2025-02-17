@@ -106,7 +106,7 @@ class AIMO:
             return "请输入有效的消息。"
             
         # 1. 获取用户最新的输入
-        user_input = messages[-1].get("content", "")
+        user_input = messages[-1].content
         
         # 2. 分析情感
         emotions = self.emotion_model.predict(user_input)

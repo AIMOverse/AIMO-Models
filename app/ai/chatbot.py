@@ -75,7 +75,7 @@ class Chatbot:
         :param user_input: 用户输入的内容
         :return: DeepSeek API 生成的文本回复
         """
-        initial_message = "你好啊人类，我是 AIMO#0001 号，很高兴见到你！今天感觉怎么样？"
+        initial_message = "Hello Human，I am AIMO#0001，nice to see you！How are you today？"
         print(f"AIMO: {initial_message}")
 
         # 1. 分析情感

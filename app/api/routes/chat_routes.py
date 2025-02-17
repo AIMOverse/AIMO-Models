@@ -13,7 +13,7 @@ Date: 2025-1-20
 Description:
     This module defines the controller of chat services
 """
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="", tags=["chat"])
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -33,24 +33,25 @@ async def generate(dto: ChatDto) -> ChatItem:
                 detail="消息列表不能为空"
             )
             
-        logger.debug(f"收到请求: {dto}")
+        logger.debug(f"收到请求类型: {type(dto)}")
+        logger.debug(f"消息列表类型: {type(dto.messages)}")
+        logger.debug(f"第一条消息类型: {type(dto.messages[0])}")
+        logger.debug(f"消息内容: {[m.dict() for m in dto.messages]}")
+        
         response = await aimo.get_response(
             messages=dto.messages,
             temperature=dto.temperature,
             max_new_tokens=dto.max_tokens
         )
-        logger.debug(f"AI 响应: {response}")
         
-        result = ChatItem(
-            content=response,
-            role="assistant"
-        )
-        logger.debug(f"返回结果: {result}")
+        result = ChatItem(content=response, role="assistant")
+        logger.debug(f"返回结果: {result.dict()}")
         return result
+        
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"生成响应时发生错误: {str(e)}", exc_info=True)
+        logger.error(f"错误详情: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/", response_model=HealthCheck)
