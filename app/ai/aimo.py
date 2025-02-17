@@ -91,14 +91,10 @@ class AIMO:
         }
 
         # 4. Send asynchronous API request
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.url, headers=self.headers, json=data) as response:
-                    result = await response.json()
-                    return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
-        except Exception as e:
-            logging.error(f"API request failed: {str(e)}")
-            return f"Sorry, an error occurred: {str(e)}"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                result = await response.json()
+                return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
 
     # LLM API system prompt
     @property
