@@ -27,7 +27,7 @@ async def generate(dto: ChatDto) -> Message:
     response = await aimo.get_response(
         messages=dto.messages,
         temperature=dto.temperature,
-        max_new_tokens=dto.max_tokens
+        max_new_tokens=dto.max_new_tokens
     )
     result = Message(content=response, role="assistant")
     return result
