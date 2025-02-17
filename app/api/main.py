@@ -1,6 +1,5 @@
 from fastapi import APIRouter
-
-from app.api.routes import chat
+from app.api.routes import chat_routes
 
 """
 Author: Jack Pan
@@ -11,4 +10,4 @@ Description:
 
 
 api_router = APIRouter()
-api_router.include_router(chat.router)
+api_router.include_router(chat_routes.router, prefix="/chat", tags=["chat"])

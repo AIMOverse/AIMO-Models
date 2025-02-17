@@ -10,6 +10,11 @@ AIMO is a lightweight, large-language model backend designed to provide emotiona
 
 ## Installation
 
+### Requirements
+
+- Python 3.6 or higher
+- CUDA 12.4 (for GPU support)
+
 Follow the steps below to set up AIMO on your system:
 
 ```bash

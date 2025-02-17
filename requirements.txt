@@ -1,10 +1,23 @@
-torch==2.5.1+cu124
-transformers~=4.46.3
+# Core Machine Learning & NLP Libraries
+torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+transformers==4.48.3
+tokenizers==0.21.0
+datasets==3.2.0
+evaluate==0.4.3
+safetensors==0.5.2
+
 uvicorn~=0.34.0
 fastapi~=0.115.6
 pydantic~=2.10.5
 pydantic_core~=2.27.2
 pydantic-settings~=2.7.1
 typing_extensions~=4.12.2
+
+# Testing Libraries
 pytest~=8.3.4
 pytest-cov~=6.0.0
+
+# Network Libraries
+aiohttp~=3.11.11

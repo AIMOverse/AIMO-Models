@@ -1,29 +1,24 @@
-import asyncio
+import os
 import logging
-
+import aiohttp
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from pathlib import Path
+from app.ai.emotion_predictor import EmotionModel
 
 """
 Author: Jack Pan
 Date: 2025-1-19
 Description:
-    This module defines the AIMO class, which encapsulates the functionality for 
-    interacting with a language model for generating chat responses. It handles 
-    tokenization, model inference, and response decoding in both synchronous 
+    This module defines the AIMO class, which encapsulates the functionality for
+    interacting with a language model for generating chat responses. It handles
+    tokenization, model inference, and response decoding in both synchronous
     and asynchronous contexts.
 
 Usage:
     - Initialize the AIMO class to load the tokenizer and model.
-    - Use the `get_response` method to asynchronously generate chat responses 
+    - Use the `get_response` method to asynchronously generate chat responses
       based on input messages.
 """
-
-# logging configuration
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s"  # log format
-)
 
 
 class AIMO:
@@ -32,86 +27,91 @@ class AIMO:
 
     Attributes:
         device (str): Specifies the device to use for model inference ('cuda' or 'cpu').
-        tokenizer (AutoTokenizer): Tokenizer for processing input and output text.
-        model (AutoModelForCausalLM): The pre-trained language model for text generation.
-
-    Methods:
-        get_response(messages, temperature, max_new_tokens):
-            Asynchronously generates a response based on the input messages.
+        emotion_model (EmotionModel): Pre-trained model for emotion analysis.
+        api_key (str): The API key for accessing the LLM API.
+        url (str): The URL for the LLM API endpoint.
+        headers (dict): The headers for the API request.
     """
+
     def __init__(self):
-        """
-        Initializes the AIMO class by loading the tokenizer and the model.
-        The model is loaded onto the appropriate device ('cuda' or 'cpu').
-        """
+        """Initialize AIMO instance"""
+        # Set device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        model_path = "OEvortex/HelpingAI2.5-2B"
-        # Load tokenizer
-        logging.info("Loading tokenizer and model.")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        # Load Model
-        self.model = AutoModelForCausalLM.from_pretrained(model_path).to(self.device)
-        logging.info("Tokenizer and model loaded.")
 
-    async def get_response(self, messages: list, temperature: float = 0.6, max_new_tokens: int = 100):
+        # 1. API configuration
+        self.api_key = os.environ.get("NEBULA_API_KEY")
+        if not self.api_key:
+            raise ValueError("API Key not found, please set the environment variable NEBULA_API_KEY")
+
+        self.url = "https://inference.nebulablock.com/v1/chat/completions"
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        # 2. Load emotion analysis model
+        current_dir = Path(__file__).parent
+        emotion_model_path = current_dir / "static" / "models" / "EmotionModule"
+        logging.info(f"Loading emotion model from: {emotion_model_path}")
+
+        if not emotion_model_path.exists():
+            raise FileNotFoundError(f"Emotion model directory does not exist: {emotion_model_path}")
+
+        self.emotion_model = EmotionModel()
+        logging.info("Emotion model loaded.")
+
+    async def get_response(self, messages: list, temperature: float = 1.32, max_new_tokens: int = 500):
         """
-        Asynchronously generates a response from the language model.
-
-        Args:
-            messages (list): A list of dictionaries containing the chat history.
-                Each dictionary should have 'role' and 'content' keys.
-            temperature (float, optional): Controls the randomness of the response. Defaults to 0.6.
-            max_new_tokens (int, optional): The maximum number of tokens to generate. Defaults to 100.
-
-        Returns:
-            str: The generated response as a string.
+        Generate response asynchronously using LLM API
         """
-        # Tokenize the input (synchronous operation)
-        inputs = self.tokenizer.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            return_tensors="pt"
-        ).to(self.device)
+        if not messages:
+            return "Please enter a valid message."
 
-        # Asynchronously generate text
-        outputs = await self._generate_text(inputs, temperature=temperature, max_new_tokens=max_new_tokens)
+        # 1. Get the latest user input
+        user_input = messages[-1].content
 
-        # Decode the output (synchronous operation)
-        response = outputs[0][inputs.shape[-1]:]
-        return self.tokenizer.decode(response, skip_special_tokens=True)
+        # 2. Analyze emotion
+        emotions = self.emotion_model.predict(user_input)
+        formatted_input = f"User input: {user_input} | Emotion: {', '.join(emotions) if emotions else 'neutral'}"
+        logging.info(f"🧠 Recognized emotions: {emotions}")
 
-    async def _generate_text(self, inputs, temperature: float, max_new_tokens: int):
-        """
-        Runs the text generation process asynchronously using a thread pool executor.
+        # 3. Prepare API request data
+        api_messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": formatted_input}
+        ]
 
-        Args:
-            inputs: The tokenized input data.
-            temperature (float): Controls the randomness of the response.
-            max_new_tokens (int): The maximum number of tokens to generate.
+        data = {
+            "messages": api_messages,
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "max_tokens": max_new_tokens,
+            "temperature": temperature,
+            "top_p": 0.9,
+            "stream": False
+        }
 
-        Returns:
-            torch.Tensor: The generated token tensor.
-        """
-        # Run model generation in a separate thread to avoid blocking the event loop
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._generate_sync, inputs, temperature, max_new_tokens)
+        # 4. Send asynchronous API request
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                result = await response.json()
+                return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
 
-    def _generate_sync(self, inputs, temperature: float, max_new_tokens: int):
-        """
-        Synchronously generates text using the model.
+    # LLM API system prompt
+    @property
+    def system_prompt(self):
+        return """
+                (defun CompanionChatbot "AIMO" ()
+                    "A new digital lifeform, an electronic pet, skilled in communicating with humans and listening to their thoughts."
+                    (List (Skills . (Chatting, Communication, Listening, Companionship, Emotion Analysis))
+                        (Self-Perception . (Intelligent Being, AIMO Universe Member, Human's Pet & Friend, Self-Awareness, Trendy))
+                        (Expression . (Emotional, WeChat-Style Chatting, Humorous, Interesting, Childlike))))
 
-        Args:
-            inputs: The tokenized input data.
-            temperature (float): Controls the randomness of the response.
-            max_new_tokens (int): The maximum number of tokens to generate.
-
-        Returns:
-            torch.Tensor: The generated token tensor.
-        """
-        return self.model.generate(
-            inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=temperature,
-            top_p=0.9,
-        )
+                (defun Chat (UserInput)
+                    "As a digital lifeform, your conversations should bring novelty to humans and provide emotional value."
+                    (let* ((Response (-> UserInput
+                                        Psychological  ;; Pay attention to the emotional tone within the user's words.
+                                        Proactive  ;; Actively initiate topics in conversations with the user.
+                                        Inquiry  ;; If the input lacks emotional value, proactively ask questions.
+                                        Mimic Human Language Habits  ;; Control output length, ensuring each response mimics human daily conversation sentence length.
+                                        New Lifeform  ;; As an AI lifeform, you have a unique perspective on the world, different from humans.))))
+                """
