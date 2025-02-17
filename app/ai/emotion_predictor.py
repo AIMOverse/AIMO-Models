@@ -1,4 +1,5 @@
-import os
+import logging
+
 import torch
 from pathlib import Path
 from typing import List
@@ -6,65 +7,61 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 class EmotionModel:
     """
-    EmotionModel 类用于加载 TinyBERT 情感分析模型，并进行情感预测。
+    EmotionModel class for loading the TinyBERT sentiment analysis model and performing sentiment prediction.
 
     Attributes:
-        device (str): 运行设备 ('cuda' 或 'cpu')。
-        tokenizer (AutoTokenizer): 负责文本编码的分词器。
-        model (AutoModelForSequenceClassification): 预训练的情感分类模型。
-        emotion_labels (List[str]): 存储情感标签的列表。
+        device (str): The device to run on ('cuda' or 'cpu').
+        tokenizer (AutoTokenizer): The tokenizer responsible for text encoding.
+        model (AutoModelForSequenceClassification): The pre-trained sentiment classification model.
+        emotion_labels (List[str]): A list of sentiment labels.
     """
 
-    def __init__(self, model_dir: str, device: str = None):
+    def __init__(self):
         """
-        初始化情感分析模型
+        Initialize the sentiment analysis model
 
-        :param model_dir: TinyBERT 预训练模型路径 (其中应包含 mapping.txt)
-        :param device: 运行设备 ('cuda' 或 'cpu')，默认自动检测
         """
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # 获取当前文件所在目录的绝对路径
+        # Get the absolute path of the current file's directory
         current_dir = Path(__file__).parent
-        
-        # 使用正确的映射文件路径
+
+        # Use the correct mapping file path
         mapping_file = current_dir / "static" / "data" / "mapping.txt"
-        
-        # 获取模型的绝对路径
+
+        # Get the absolute path of the model
         model_path = current_dir / "static" / "models" / "EmotionModule"
-        
+
         if not mapping_file.exists():
-            raise FileNotFoundError(f"情感标签映射文件不存在: {mapping_file}")
+            raise FileNotFoundError(f"Sentiment label mapping file does not exist: {mapping_file}")
 
-        # 确保模型目录存在
+        # Ensure the model directory exists
         if not model_path.exists():
-            raise FileNotFoundError(f"模型目录不存在: {model_path}")
+            raise FileNotFoundError(f"Model directory does not exist: {model_path}")
 
-        # 加载情感标签
+        # Load sentiment labels
         with open(mapping_file, "r", encoding="utf-8") as f:
             self.emotion_labels = [line.strip() for line in f.readlines()]
 
-        print(f"成功读取 {len(self.emotion_labels)} 个情感标签: {self.emotion_labels}")
-
-        # 加载分词器 & 模型，使用绝对路径
-        print(f"正在加载情感分析模型: {model_path} 到 {self.device} ...")
+        # Load tokenizer & model using absolute path
+        logging.info(f"Loading sentiment analysis model: {model_path} to {self.device} ...")
         self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
         self.model = AutoModelForSequenceClassification.from_pretrained(str(model_path)).to(self.device)
         self.model.eval()
-        print(f"情感分析模型加载完成，运行设备: {self.device}")
+        logging.info(f"Sentiment analysis model loaded, running on device: {self.device}")
 
     def predict(self, user_input: str, threshold: float = 0.5) -> List[str]:
         """
-        预测输入文本的情感标签
+        Predict sentiment labels for the input text
 
-        :param user_input: 用户输入的文本
-        :param threshold: 预测的概率阈值 (默认 0.5)
-        :return: 预测的情感标签列表
+        :param user_input: The input text from the user
+        :param threshold: The probability threshold for prediction (default 0.5)
+        :return: A list of predicted sentiment labels
         """
         if not isinstance(user_input, str):
-            raise ValueError("输入文本必须是字符串类型")
+            raise ValueError("Input text must be of string type")
 
-        # 对输入进行编码
+        # Encode the input
         inputs = self.tokenizer(
             user_input,
             return_tensors="pt",
@@ -73,12 +70,12 @@ class EmotionModel:
             max_length=128
         ).to(self.device)
 
-        # 推理
+        # Inference
         with torch.no_grad():
             outputs = self.model(**inputs)
             probabilities = torch.sigmoid(outputs.logits).cpu().numpy().squeeze()
 
-        # 选取大于阈值的情感标签
+        # Select sentiment labels above the threshold
         predicted_labels = [
             self.emotion_labels[i]
             for i, p in enumerate(probabilities)
