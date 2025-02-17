@@ -1,9 +1,9 @@
-# aimo.py
 import asyncio
 import logging
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from emotion_predictor import EmotionModel
+from app.ai.emotion_predictor import EmotionModel
+from pathlib import Path
 
 """
 Author: Jack Pan
@@ -39,11 +39,12 @@ class AIMO:
     """
 
     def __init__(self):
-        # 选择设备（GPU 优先）
+        """初始化 AIMO 实例"""
+        # 设置设备
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # 1. 加载【对话生成模型】(本地)
-        #    目前你暂时使用第三方 API 进行对话生成，可先保留以下代码以备后续切换。
+        #    目前暂时使用第三方 API 进行对话生成，可先保留以下代码以备后续切换。
         '''
         chat_model_path = "static/models/ChatModel"
         logging.info("Loading chat tokenizer and model (local usage, if needed)...")
@@ -51,11 +52,15 @@ class AIMO:
         self.chat_model = AutoModelForCausalLM.from_pretrained(chat_model_path).to(self.device)
         logging.info("Chat tokenizer and model loaded (local usage).")
         '''
-
+        
         # 2. 加载【情感分析模型】
-        emotion_model_path = "static/models/EmotionModel"
-        logging.info("Loading emotion model...")
-        self.emotion_model = EmotionModel(emotion_model_path, device=self.device)
+        emotion_model_path = current_dir / "static" / "models" / "EmotionModule"  # 修改为正确的目录名
+        logging.info(f"Loading emotion model from: {emotion_model_path}")
+        
+        if not emotion_model_path.exists():
+            raise FileNotFoundError(f"情感模型目录不存在: {emotion_model_path}")
+            
+        self.emotion_model = EmotionModel(str(emotion_model_path), device=self.device)
         logging.info("Emotion model loaded.")
 
     async def get_response(self, messages: list, temperature: float = 0.6, max_new_tokens: int = 100):

@@ -1,6 +1,6 @@
-# emotion_predictor.py
 import os
 import torch
+from pathlib import Path
 from typing import List
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -24,10 +24,21 @@ class EmotionModel:
         """
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        # 假设 mapping.txt 存在于同一模型目录下
-        mapping_file = os.path.join(model_dir, "mapping.txt")
-        if not os.path.exists(mapping_file):
+        # 获取当前文件所在目录的绝对路径
+        current_dir = Path(__file__).parent
+        
+        # 使用正确的映射文件路径
+        mapping_file = current_dir / "static" / "data" / "mapping.txt"
+        
+        # 获取模型的绝对路径
+        model_path = current_dir / "static" / "models" / "EmotionModule"
+        
+        if not mapping_file.exists():
             raise FileNotFoundError(f"情感标签映射文件不存在: {mapping_file}")
+
+        # 确保模型目录存在
+        if not model_path.exists():
+            raise FileNotFoundError(f"模型目录不存在: {model_path}")
 
         # 加载情感标签
         with open(mapping_file, "r", encoding="utf-8") as f:
@@ -35,10 +46,10 @@ class EmotionModel:
 
         print(f"成功读取 {len(self.emotion_labels)} 个情感标签: {self.emotion_labels}")
 
-        # 加载分词器 & 模型
-        print(f"正在加载情感分析模型: {model_dir} 到 {self.device} ...")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_dir).to(self.device)
+        # 加载分词器 & 模型，使用绝对路径
+        print(f"正在加载情感分析模型: {model_path} 到 {self.device} ...")
+        self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
+        self.model = AutoModelForSequenceClassification.from_pretrained(str(model_path)).to(self.device)
         self.model.eval()
         print(f"情感分析模型加载完成，运行设备: {self.device}")
 
