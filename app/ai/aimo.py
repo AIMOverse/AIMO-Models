@@ -4,6 +4,7 @@ import os
 import aiohttp
 
 from app.ai.emotion_model import EmotionModel
+from app.exceptions.aimo_exceptions import AIMOException
 
 """
 Author: Jack Pan
@@ -79,8 +80,10 @@ class AIMO:
         # 4. Send asynchronous API request
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
+                if response.status != 200:
+                    raise AIMOException(f"Failed to get response from LLM API: {response.status}")
                 result = await response.json()
-                return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
+                return result["choices"][0]["message"]["content"]
 
     # LLM API system prompt
     @property
