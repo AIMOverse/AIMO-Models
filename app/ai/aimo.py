@@ -1,9 +1,9 @@
-import os
 import logging
+import os
+
 import aiohttp
-import torch
-from pathlib import Path
-from app.ai.emotion_predictor import EmotionModel
+
+from app.ai.emotion_model import EmotionModel
 
 """
 Author: Jack Pan
@@ -26,7 +26,6 @@ class AIMO:
     AIMO class for handling chat-based interactions with a language model.
 
     Attributes:
-        device (str): Specifies the device to use for model inference ('cuda' or 'cpu').
         emotion_model (EmotionModel): Pre-trained model for emotion analysis.
         api_key (str): The API key for accessing the LLM API.
         url (str): The URL for the LLM API endpoint.
@@ -35,37 +34,24 @@ class AIMO:
 
     def __init__(self):
         """Initialize AIMO instance"""
-        # Set device
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        # 1. API configuration
+        # API configuration
         self.api_key = os.environ.get("NEBULA_API_KEY")
         if not self.api_key:
             raise ValueError("API Key not found, please set the environment variable NEBULA_API_KEY")
-
+        # LLM API endpoint
         self.url = "https://inference.nebulablock.com/v1/chat/completions"
+        # API headers
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
-
-        # 2. Load emotion analysis model
-        current_dir = Path(__file__).parent
-        emotion_model_path = current_dir / "static" / "models" / "EmotionModule"
-        logging.info(f"Loading emotion model from: {emotion_model_path}")
-
-        if not emotion_model_path.exists():
-            raise FileNotFoundError(f"Emotion model directory does not exist: {emotion_model_path}")
-
+        # Load emotion model
         self.emotion_model = EmotionModel()
-        logging.info("Emotion model loaded.")
 
     async def get_response(self, messages: list, temperature: float = 1.32, max_new_tokens: int = 500):
         """
         Generate response asynchronously using LLM API
         """
-        if not messages:
-            return "Please enter a valid message."
 
         # 1. Get the latest user input
         user_input = messages[-1].content
@@ -91,14 +77,10 @@ class AIMO:
         }
 
         # 4. Send asynchronous API request
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.url, headers=self.headers, json=data) as response:
-                    result = await response.json()
-                    return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
-        except Exception as e:
-            logging.error(f"API request failed: {str(e)}")
-            return f"Sorry, an error occurred: {str(e)}"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                result = await response.json()
+                return result.get("choices", [{}])[0].get("message", {}).get("content", "❌ API returned an error")
 
     # LLM API system prompt
     @property

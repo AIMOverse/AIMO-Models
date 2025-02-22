@@ -1,9 +1,11 @@
 import logging
-
-import torch
 from pathlib import Path
 from typing import List
+
+import numpy
+import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
 
 class EmotionModel:
     """
@@ -47,7 +49,6 @@ class EmotionModel:
         logging.info(f"Loading sentiment analysis model: {model_path} to {self.device} ...")
         self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
         self.model = AutoModelForSequenceClassification.from_pretrained(str(model_path)).to(self.device)
-        self.model.eval()
         logging.info(f"Sentiment analysis model loaded, running on device: {self.device}")
 
     def predict(self, user_input: str, threshold: float = 0.5) -> List[str]:
@@ -58,9 +59,6 @@ class EmotionModel:
         :param threshold: The probability threshold for prediction (default 0.5)
         :return: A list of predicted sentiment labels
         """
-        if not isinstance(user_input, str):
-            raise ValueError("Input text must be of string type")
-
         # Encode the input
         inputs = self.tokenizer(
             user_input,
@@ -77,9 +75,7 @@ class EmotionModel:
 
         # Select sentiment labels above the threshold
         predicted_labels = [
-            self.emotion_labels[i]
-            for i, p in enumerate(probabilities)
-            if p > threshold
+            self.emotion_labels[i] for i, p in enumerate(probabilities) if p > numpy.float32(threshold)
         ]
 
         return predicted_labels

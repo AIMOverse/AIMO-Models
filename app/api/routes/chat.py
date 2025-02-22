@@ -1,9 +1,9 @@
 import logging
+
 from fastapi import APIRouter
 
 from app.ai.aimo import AIMO
 from app.models.chat import ChatDto, Message
-from app.models.health_check import HealthCheck
 
 """
 Author: Jack Pan, Wesley Xu
@@ -31,10 +31,3 @@ async def generate(dto: ChatDto) -> Message:
     )
     result = Message(content=response, role="assistant")
     return result
-
-@router.get("/", response_model=HealthCheck)
-async def health_check():
-    """
-    Health check endpoint
-    """
-    return HealthCheck(status="ok")
