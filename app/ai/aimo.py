@@ -1,10 +1,12 @@
 import logging
 import os
+from typing import List
 
 import aiohttp
 
 from app.ai.emotion_model import EmotionModel
 from app.exceptions.aimo_exceptions import AIMOException
+from app.models.chat import Message
 
 """
 Author: Jack Pan
@@ -49,13 +51,16 @@ class AIMO:
         # Load emotion model
         self.emotion_model = EmotionModel()
 
-    async def get_response(self, messages: list, temperature: float = 1.32, max_new_tokens: int = 500):
+    async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
         """
         Generate response asynchronously using LLM API
         """
 
-        # 1. Get the latest user input
-        user_input = messages[-1].content
+        last_message = messages.pop()
+        # 1. Check if the last message is from the user
+        if last_message.role != "user":
+            raise AIMOException("The last message must be from the user")
+        user_input = last_message.content
 
         # 2. Analyze emotion
         emotions = self.emotion_model.predict(user_input)
@@ -63,10 +68,13 @@ class AIMO:
         logging.info(f"🧠 Recognized emotions: {emotions}")
 
         # 3. Prepare API request data
-        api_messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": formatted_input}
-        ]
+        # Add system prompt if the first message is not from the system
+        if not messages or messages[0].role != "system":
+            api_messages = [{"role": "system", "content": self.system_prompt}] + messages
+        else:
+            api_messages = messages
+        # Add user input to the messages
+        api_messages.append({"role": "user", "content": formatted_input})
 
         data = {
             "messages": api_messages,
