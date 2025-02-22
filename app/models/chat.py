@@ -33,6 +33,7 @@ class ChatDto(BaseModel):
     messages: List[Message]
     temperature: Union[float, None]
     max_new_tokens: Union[int, None]
+    stream: bool
 
     # Check if the length of the messages is more than 1
 
@@ -40,5 +41,5 @@ class ChatDto(BaseModel):
     @classmethod
     def check_messages(cls, v):
         if len(v) < 1:
-            raise ValueError('messages 列表中至少需要包含一条消息')
+            raise ValueError('messages must contain at least one message')
         return v

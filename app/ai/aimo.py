@@ -1,10 +1,13 @@
+import json
 import logging
 import os
+from typing import List
 
 import aiohttp
 
 from app.ai.emotion_model import EmotionModel
 from app.exceptions.aimo_exceptions import AIMOException
+from app.models.chat import Message
 
 """
 Author: Jack Pan
@@ -20,6 +23,21 @@ Usage:
     - Use the `get_response` method to asynchronously generate chat responses
       based on input messages.
 """
+
+
+def decode_response(line):
+    """
+    Decode the response from the LLM API
+    """
+    decoded_line = line.decode('utf-8').strip()
+    if decoded_line.startswith("data: "):  # SEE data usually starts with "data: "
+        json_data = decoded_line[6:]  # Remove the "data: " prefix
+        try:
+            event_data = json.loads(json_data)
+            return event_data
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 class AIMO:
@@ -49,24 +67,36 @@ class AIMO:
         # Load emotion model
         self.emotion_model = EmotionModel()
 
-    async def get_response(self, messages: list, temperature: float = 1.32, max_new_tokens: int = 500):
-        """
-        Generate response asynchronously using LLM API
-        """
+    def get_constructed_api_messages(self, messages: List[Message]):
+        last_message = messages.pop()
+        # Check if the last message is from the user
+        if last_message.role != "user":
+            raise AIMOException("The last message must be from the user")
+        user_input = last_message.content
 
-        # 1. Get the latest user input
-        user_input = messages[-1].content
-
-        # 2. Analyze emotion
+        # Analyze emotion
         emotions = self.emotion_model.predict(user_input)
         formatted_input = f"User input: {user_input} | Emotion: {', '.join(emotions) if emotions else 'neutral'}"
         logging.info(f"🧠 Recognized emotions: {emotions}")
 
-        # 3. Prepare API request data
-        api_messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": formatted_input}
-        ]
+        # Prepare API request data
+        # Add system prompt if the first message is not from the system
+        if not messages or messages[0].role != "system":
+            api_messages = [{"role": "system", "content": self.system_prompt}] + messages
+        else:
+            api_messages = messages
+        # Add user input to the messages
+        api_messages.append({"role": "user", "content": formatted_input})
+        return api_messages
+
+
+
+    async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
+        """
+        Generate response asynchronously using LLM API
+        """
+        # Construct API messages
+        api_messages = self.get_constructed_api_messages(messages)
 
         data = {
             "messages": api_messages,
@@ -77,7 +107,7 @@ class AIMO:
             "stream": False
         }
 
-        # 4. Send asynchronous API request
+        # Send asynchronous API request
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
@@ -85,6 +115,39 @@ class AIMO:
                 result = await response.json()
                 return result["choices"][0]["message"]["content"]
 
+    async def get_response_stream(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
+        """
+        Generate response asynchronously using LLM API with streaming
+        """
+        # Construct API messages
+        api_messages = self.get_constructed_api_messages(messages)
+
+        data = {
+            "messages": api_messages,
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "max_tokens": max_new_tokens,
+            "temperature": temperature,
+            "top_p": 0.9,
+            "stream": True
+        }
+
+        # Send asynchronous API request
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                # Check if the response is successful
+                if response.status != 200:
+                    raise AIMOException(f"Failed to get response from LLM API: {response.status}")
+                async for line in response.content:
+                    # Decode the response line
+                    data = decode_response(line)
+                    # Check if the data is valid
+                    if not data:
+                        continue
+                    # Get the response content
+                    content = data["choices"][0]["delta"].get("content", "")
+                    if content:
+                        yield b'data: ' + json.dumps(
+                            Message(content=content, role="assistant").model_dump_json()).encode('utf-8') + b'\n\n'
 
     # LLM API system prompt
     @property
