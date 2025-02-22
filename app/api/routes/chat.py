@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter
 
 from app.ai.aimo import AIMO
@@ -12,9 +10,6 @@ Description:
     This module defines the controller of chat services
 """
 router = APIRouter(prefix="", tags=["chat"])
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # Initialize the AI model
 aimo = AIMO()
