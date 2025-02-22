@@ -1,10 +1,6 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-
-# Set the API key for testing before importing the FastAPI app
-os.environ["NEBULA_API_KEY"] = "sk-irz6Mnu2ReWGMmSnqNPyMg"
-
 from app.main import app
 from app.core.config import settings
 

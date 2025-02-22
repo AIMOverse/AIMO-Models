@@ -1,5 +1,6 @@
 from typing import List, Union
-from pydantic import BaseModel
+
+from pydantic import BaseModel, field_validator
 
 """
 Author: Jack Pan
@@ -33,5 +34,11 @@ class ChatDto(BaseModel):
     temperature: Union[float, None]
     max_new_tokens: Union[int, None]
 
-class HealthCheck(BaseModel):
-    status: str
+    # Check if the length of the messages is more than 1
+
+    @field_validator('messages')
+    @classmethod
+    def check_messages(cls, v):
+        if len(v) < 1:
+            raise ValueError('messages 列表中至少需要包含一条消息')
+        return v
