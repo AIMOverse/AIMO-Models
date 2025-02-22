@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import List
@@ -22,6 +23,21 @@ Usage:
     - Use the `get_response` method to asynchronously generate chat responses
       based on input messages.
 """
+
+
+def decode_response(line):
+    """
+    Decode the response from the LLM API
+    """
+    decoded_line = line.decode('utf-8').strip()
+    if decoded_line.startswith("data: "):  # SSE 事件通常以 "data: " 开头
+        json_data = decoded_line[6:]  # 去掉 "data: "
+        try:
+            event_data = json.loads(json_data)
+            return event_data
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 class AIMO:
@@ -99,6 +115,39 @@ class AIMO:
                 result = await response.json()
                 return result["choices"][0]["message"]["content"]
 
+    async def get_response_stream(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
+        """
+        Generate response asynchronously using LLM API with streaming
+        """
+        # Construct API messages
+        api_messages = self.get_constructed_api_messages(messages)
+
+        data = {
+            "messages": api_messages,
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "max_tokens": max_new_tokens,
+            "temperature": temperature,
+            "top_p": 0.9,
+            "stream": True
+        }
+
+        # Send asynchronous API request
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                # Check if the response is successful
+                if response.status != 200:
+                    raise AIMOException(f"Failed to get response from LLM API: {response.status}")
+                async for line in response.content:
+                    # Decode the response line
+                    data = decode_response(line)
+                    # Check if the data is valid
+                    if not data:
+                        continue
+                    # Get the response content
+                    content = data["choices"][0]["delta"].get("content", "")
+                    if content:
+                        yield b'data: ' + json.dumps(
+                            Message(content=content, role="assistant").model_dump_json()).encode('utf-8') + b'\n\n'
 
     # LLM API system prompt
     @property

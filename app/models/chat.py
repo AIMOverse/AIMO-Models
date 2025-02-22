@@ -33,6 +33,7 @@ class ChatDto(BaseModel):
     messages: List[Message]
     temperature: Union[float, None]
     max_new_tokens: Union[int, None]
+    stream: bool
 
     # Check if the length of the messages is more than 1
 
