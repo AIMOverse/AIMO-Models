@@ -85,6 +85,7 @@ class AIMO:
                 result = await response.json()
                 return result["choices"][0]["message"]["content"]
 
+
     # LLM API system prompt
     @property
     def system_prompt(self):
