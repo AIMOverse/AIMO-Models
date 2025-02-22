@@ -51,23 +51,19 @@ class AIMO:
         # Load emotion model
         self.emotion_model = EmotionModel()
 
-    async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
-        """
-        Generate response asynchronously using LLM API
-        """
-
+    def get_constructed_api_messages(self, messages: List[Message]):
         last_message = messages.pop()
-        # 1. Check if the last message is from the user
+        # Check if the last message is from the user
         if last_message.role != "user":
             raise AIMOException("The last message must be from the user")
         user_input = last_message.content
 
-        # 2. Analyze emotion
+        # Analyze emotion
         emotions = self.emotion_model.predict(user_input)
         formatted_input = f"User input: {user_input} | Emotion: {', '.join(emotions) if emotions else 'neutral'}"
         logging.info(f"🧠 Recognized emotions: {emotions}")
 
-        # 3. Prepare API request data
+        # Prepare API request data
         # Add system prompt if the first message is not from the system
         if not messages or messages[0].role != "system":
             api_messages = [{"role": "system", "content": self.system_prompt}] + messages
@@ -75,6 +71,16 @@ class AIMO:
             api_messages = messages
         # Add user input to the messages
         api_messages.append({"role": "user", "content": formatted_input})
+        return api_messages
+
+
+
+    async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
+        """
+        Generate response asynchronously using LLM API
+        """
+        # Construct API messages
+        api_messages = self.get_constructed_api_messages(messages)
 
         data = {
             "messages": api_messages,
@@ -85,7 +91,7 @@ class AIMO:
             "stream": False
         }
 
-        # 4. Send asynchronous API request
+        # Send asynchronous API request
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
