@@ -30,8 +30,8 @@ def decode_response(line):
     Decode the response from the LLM API
     """
     decoded_line = line.decode('utf-8').strip()
-    if decoded_line.startswith("data: "):  # SSE 事件通常以 "data: " 开头
-        json_data = decoded_line[6:]  # 去掉 "data: "
+    if decoded_line.startswith("data: "):  # SEE data usually starts with "data: "
+        json_data = decoded_line[6:]  # Remove the "data: " prefix
         try:
             event_data = json.loads(json_data)
             return event_data
