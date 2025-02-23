@@ -51,5 +51,3 @@ register_exception_handlers(app)
 
 # Include the API router with a prefix
 app.include_router(api_router, prefix=settings.API_V1_STR)
-# Include the API router without a prefix
-app.include_router(api_router)
