@@ -19,7 +19,7 @@ Description:
 
 # Configure logging settings
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.DEBUG if settings.ENVIRONMENT == 'local' else logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -34,7 +34,8 @@ app = FastAPI(
     title=settings.PROJECT_NAME,  # Title on generated documentation
     openapi_url=f"{settings.API_V1_STR}/openapi.json",  # Path to generated OpenAPI documentation
     generate_unique_id_function=custom_generate_unique_id,  # Custom function for generating unique route IDs
-    version=settings.version  # Version of the API
+    version=settings.version,  # Version of the API
+    debug=True if settings.ENVIRONMENT == 'local' else False
 )
 
 # Configure CORS settings
