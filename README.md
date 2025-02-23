@@ -66,7 +66,8 @@ Below is an example of the main endpoint:
         {"role": "user", "content": "Hello!"}
     ],
     "temperature": 0.7,
-    "max_new_tokens": 100
+    "max_new_tokens": 100,
+    "stream": false
 }
 ```
 
