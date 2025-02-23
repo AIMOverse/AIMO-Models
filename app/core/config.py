@@ -1,3 +1,4 @@
+import socket
 from dataclasses import field
 from typing import Literal, List
 
@@ -14,7 +15,8 @@ Description:
 class Settings(BaseSettings):
     version: str = "1.0.0"  # Version of the API
     API_V1_STR: str = f"/api/v{version}"  # Path to the base API
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"  # Environment of the application
+    ENVIRONMENT: Literal[
+        "local", "staging", "production"] = "production" if "ai-model-service" in socket.gethostname() else "local"  # Environment of the application
 
     BACKEND_CORS_ORIGINS: List[str] = field(default_factory=lambda: ["*"])  # Allowed origins for CORS
 
