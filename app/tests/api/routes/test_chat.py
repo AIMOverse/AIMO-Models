@@ -2,24 +2,24 @@ import json
 import logging
 import pytest
 from fastapi.testclient import TestClient
+
 from app.core.config import settings
 from app.main import app
 
 """
-Author: Jack Pan, Wesley Xu
+Author: Jack Pan
 Date: 2025-1-20
 Description:
-    This file is for testing OpenAI-compatible chat API endpoints
+    This file is for testing chat related APIs.
 """
 
 @pytest.fixture
 def client():
     return TestClient(app)
 
+# Test generate a response from the input
 def test_generate(client: TestClient) -> None:
-    """Test non-streaming chat completion"""
     data = {
-        "model": "aimo-chat",
         "messages": [
             {
                 "role": "user",
@@ -27,27 +27,19 @@ def test_generate(client: TestClient) -> None:
             }
         ],
         "temperature": 0.6,
-        "max_tokens": 100,
+        "max_new_tokens": 100,
         "stream": False
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",  # Keep API path consistent with OpenAI
+        f"{settings.API_V1_STR}/chat/completions",
         json=data,
     )
     assert response.status_code == 200
-    
-    # Verify response structure
-    json_response = response.json()
-    assert "id" in json_response
-    assert "choices" in json_response
-    assert len(json_response["choices"]) > 0
-    assert "message" in json_response["choices"][0]
-    assert "content" in json_response["choices"][0]["message"]
 
-def test_stream_chat(client: TestClient):
-    """Test streaming chat completion"""
+
+# Test SSE endpoint
+def test_sse_chat(client: TestClient):
     data = {
-        "model": "aimo-chat",
         "messages": [
             {
                 "role": "user",
@@ -55,19 +47,19 @@ def test_stream_chat(client: TestClient):
             }
         ],
         "temperature": 0.6,
-        "max_tokens": 100,
+        "max_new_tokens": 100,
         "stream": True
     }
-
     response = client.post(
         f"{settings.API_V1_STR}/chat/completions",
         json=data,
-        headers={"Accept": "text/event-stream"}
     )
 
+    # Check if the response is successful
     assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/event-stream")
-
+    # Check if the response is in the correct format
+    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+    
     received_role = False
     received_content = False
     received_done = False

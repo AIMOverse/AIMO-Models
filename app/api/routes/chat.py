@@ -6,6 +6,7 @@ from uuid import uuid4
 from time import time
 from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
+
 from app.ai.aimo import AIMO
 
 logger = logging.getLogger(__name__)
@@ -20,10 +21,11 @@ from app.models.openai import (
 Author: Jack Pan, Wesley Xu
 Date: 2025-1-20
 Description:
-    OpenAI-compatible chat completion API controller
+    This module defines the controller of chat services
 """
+router = APIRouter(prefix="", tags=["chat"])
 
-router = APIRouter(tags=["chat"])
+# Initialize the AI model
 aimo = AIMO()
 
 @router.post("/completions", response_model=ChatCompletionResponse)

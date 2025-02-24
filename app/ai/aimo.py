@@ -72,7 +72,7 @@ class AIMO:
     def get_constructed_api_messages(self, messages: List[Message]):
         last_message = messages.pop()
         # Check if the last message is from the user
-        if (last_message.role != "user"):
+        if last_message.role != "user":
             raise AIMOException("The last message must be from the user")
         user_input = last_message.content
 
@@ -121,6 +121,7 @@ class AIMO:
         """Generate streaming response with empty chunk filtering"""
         api_messages = self.get_constructed_api_messages(messages.copy())
         
+
         data = {
             "messages": api_messages,
             "model": "meta-llama/Llama-3.3-70B-Instruct",
@@ -129,7 +130,7 @@ class AIMO:
             "top_p": 0.9,
             "stream": True
         }
-
+        
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
