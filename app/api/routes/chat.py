@@ -1,10 +1,21 @@
+import json
+import logging
 from typing import Union
-
+from typing import AsyncGenerator
+from uuid import uuid4
+from time import time
 from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
 from app.ai.aimo import AIMO
-from app.models.chat import ChatDto, Message
+
+logger = logging.getLogger(__name__)
+from app.models.openai import (
+    ChatCompletionRequest, 
+    ChatCompletionResponse,
+    ChatChoice,
+    Message
+)
 
 """
 Author: Jack Pan, Wesley Xu
@@ -17,21 +28,32 @@ router = APIRouter(prefix="", tags=["chat"])
 # Initialize the AI model
 aimo = AIMO()
 
-@router.post("/", response_model=Message)
-async def generate(dto: ChatDto) -> Union[Message, EventSourceResponse]:
-    """
-    Generate chat response
-    """
-    # Check if the stream flag is set
-    if not dto.stream:
-        # Generate a chat response
+@router.post("/completions", response_model=ChatCompletionResponse)
+async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCompletionResponse, EventSourceResponse]:
+    """OpenAI-compatible chat completion endpoint"""
+    if not request.stream:
         response = await aimo.get_response(
-            messages=dto.messages,
-            temperature=dto.temperature,
-            max_new_tokens=dto.max_new_tokens
+            messages=request.messages,
+            temperature=request.temperature,
+            max_new_tokens=request.max_tokens
         )
-        result = Message(content=response, role="assistant")
-        return result
-    else:
-        # Generate a chat response stream
-        return EventSourceResponse(aimo.get_response_stream(dto.messages, dto.temperature, dto.max_new_tokens))
+        
+        return ChatCompletionResponse(
+            model=request.model,
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message=Message(role="assistant", content=response),
+                    finish_reason="stop"
+                )
+            ]
+        )
+
+    return EventSourceResponse(
+        aimo.generate_chat_events(
+            messages=request.messages,
+            model=request.model,
+            temperature=request.temperature,
+            max_new_tokens=request.max_tokens
+        )
+    )
