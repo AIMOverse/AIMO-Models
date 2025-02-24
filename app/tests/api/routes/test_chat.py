@@ -1,4 +1,5 @@
 import json
+import logging
 import pytest
 from fastapi.testclient import TestClient
 from app.core.config import settings
@@ -67,38 +68,59 @@ def test_stream_chat(client: TestClient):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
 
-    # Iterate response content line by line, parse SSE events
-    valid_events = []
+    received_role = False
+    received_content = False
+    received_done = False
+    event_count = 0
+
     for line in response.iter_lines():
         if not line:
             continue
-            
+
+        decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
+        logging.debug(f"Raw line: {decoded_line}")
+
+        if not decoded_line.startswith("data: "):
+            continue
+
+        # Remove all "data: " prefixes
+        clean_line = decoded_line.replace("data: data: ", "data: ").strip()
+        
+        # Handle DONE marker - special case
+        if clean_line in ["data: [DONE]", "data: [DONE]\n\n"]:
+            received_done = True
+            logging.info("Received DONE marker")
+            break
+
         try:
-            decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if not decoded_line.startswith("data: "):
-                continue
-
-            if decoded_line.strip() == "data: [DONE]":
-                break  # SSE completion marker
-
-            # Remove "data: " prefix
-            json_str = decoded_line.replace("data: ", "").strip()
+            json_str = clean_line.replace("data: ", "").strip()
             if not json_str:
                 continue
 
-            # Parse JSON data
-            event_data = json.loads(json_str)
-            valid_events.append(event_data)
+            data = json.loads(json_str)
+            event_count += 1
+            logging.debug(f"Parsed event {event_count}: {data}")
 
-            # Verify SSE event data structure
-            assert "choices" in event_data
-            assert isinstance(event_data["choices"], list)
-            assert len(event_data["choices"]) > 0
-            assert "delta" in event_data["choices"][0]
+            # Check event structure
+            assert "choices" in data
+            assert len(data["choices"]) > 0
+            assert "delta" in data["choices"][0]
+
+            # Track message parts
+            delta = data["choices"][0]["delta"]
+            if "role" in delta and delta["role"] == "assistant":
+                received_role = True
+                logging.info("Received role event")
+            if "content" in delta and delta["content"].strip():
+                received_content = True
+                logging.info(f"Received content: {delta['content']}")
 
         except json.JSONDecodeError as e:
-            print(f"Skipping invalid JSON: {e}")
+            logging.warning(f"JSON parse error: {e} for line: {clean_line}")
             continue
 
-    # Verify at least one valid event was received
-    assert len(valid_events) > 0, "No valid events received"
+    # Verify we got everything we needed
+    assert event_count > 0, "No events received"
+    assert received_role, "Did not receive role message"
+    assert received_content, "Did not receive any content"
+    assert received_done, "Did not receive DONE marker"
