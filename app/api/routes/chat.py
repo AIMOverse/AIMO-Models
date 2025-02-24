@@ -26,7 +26,7 @@ Description:
 router = APIRouter(tags=["chat"])
 aimo = AIMO()
 
-@router.post("/chat/completions", response_model=ChatCompletionResponse)
+@router.post("/completions", response_model=ChatCompletionResponse)
 async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCompletionResponse, EventSourceResponse]:
     """OpenAI-compatible chat completion endpoint"""
     if not request.stream:
