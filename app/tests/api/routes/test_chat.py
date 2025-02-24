@@ -1,24 +1,23 @@
-import json
 import pytest
 from fastapi.testclient import TestClient
+
 from app.core.config import settings
 from app.main import app
 
 """
-Author: Jack Pan, Wesley Xu
+Author: Jack Pan
 Date: 2025-1-20
 Description:
-    This file is for testing OpenAI-compatible chat API endpoints
+    This file is for testing chat related APIs.
 """
 
 @pytest.fixture
 def client():
     return TestClient(app)
 
+# Test generate a response from the input
 def test_generate(client: TestClient) -> None:
-    """Test non-streaming chat completion"""
     data = {
-        "model": "aimo-chat",
         "messages": [
             {
                 "role": "user",
@@ -26,27 +25,19 @@ def test_generate(client: TestClient) -> None:
             }
         ],
         "temperature": 0.6,
-        "max_tokens": 100,
+        "max_new_tokens": 100,
         "stream": False
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",  # Keep API path consistent with OpenAI
+        f"{settings.API_V1_STR}/chat/",
         json=data,
     )
     assert response.status_code == 200
-    
-    # Verify response structure
-    json_response = response.json()
-    assert "id" in json_response
-    assert "choices" in json_response
-    assert len(json_response["choices"]) > 0
-    assert "message" in json_response["choices"][0]
-    assert "content" in json_response["choices"][0]["message"]
 
-def test_stream_chat(client: TestClient):
-    """Test streaming chat completion"""
+
+# Test SSE endpoint
+def test_sse_chat(client: TestClient):
     data = {
-        "model": "aimo-chat",
         "messages": [
             {
                 "role": "user",
@@ -54,51 +45,23 @@ def test_stream_chat(client: TestClient):
             }
         ],
         "temperature": 0.6,
-        "max_tokens": 100,
+        "max_new_tokens": 100,
         "stream": True
     }
-
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",
+        f"{settings.API_V1_STR}/chat/",
         json=data,
-        headers={"Accept": "text/event-stream"}
     )
 
+    # Check if the response is successful
     assert response.status_code == 200
-    assert response.headers["content-type"].startswith("text/event-stream")
+    # Check if the response is in the correct format
+    assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-    # Iterate response content line by line, parse SSE events
-    valid_events = []
+    events_received = []
     for line in response.iter_lines():
-        if not line:
-            continue
-            
-        try:
-            decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
-            if not decoded_line.startswith("data: "):
-                continue
+        if line.startswith("data: "):  # SSE format：data: xxx
+            events_received.append(line[6:])  # Remove the "data: " prefix
 
-            if decoded_line.strip() == "data: [DONE]":
-                break  # SSE completion marker
-
-            # Remove "data: " prefix
-            json_str = decoded_line.replace("data: ", "").strip()
-            if not json_str:
-                continue
-
-            # Parse JSON data
-            event_data = json.loads(json_str)
-            valid_events.append(event_data)
-
-            # Verify SSE event data structure
-            assert "choices" in event_data
-            assert isinstance(event_data["choices"], list)
-            assert len(event_data["choices"]) > 0
-            assert "delta" in event_data["choices"][0]
-
-        except json.JSONDecodeError as e:
-            print(f"Skipping invalid JSON: {e}")
-            continue
-
-    # Verify at least one valid event was received
-    assert len(valid_events) > 0, "No valid events received"
+    assert len(events_received) > 0  # Ensure that at least one event is received
+    assert "content" in events_received[0] and "role" in events_received[0]  # Ensure that the first event is valid
