@@ -70,7 +70,7 @@ class AIMO:
     def get_constructed_api_messages(self, messages: List[Message]):
         last_message = messages.pop()
         # Check if the last message is from the user
-        if (last_message.role != "user"):
+        if last_message.role != "user":
             raise AIMOException("The last message must be from the user")
         user_input = last_message.content
 
