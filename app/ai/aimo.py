@@ -1,9 +1,7 @@
 import json
 import logging
 import os
-from time import time
 from typing import List
-from uuid import uuid4
 
 import aiohttp
 
@@ -118,10 +116,9 @@ class AIMO:
                 return result["choices"][0]["message"]["content"]
 
     async def get_response_stream(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
-        """Generate streaming response with empty chunk filtering"""
+        """Generate raw content stream with original SSE formatting"""
         api_messages = self.get_constructed_api_messages(messages.copy())
         
-
         data = {
             "messages": api_messages,
             "model": "meta-llama/Llama-3.3-70B-Instruct",
@@ -140,71 +137,17 @@ class AIMO:
                     if not line:  # Skip empty lines
                         continue
                         
-                    decoded_line = line.decode('utf-8').strip()
-                    if not decoded_line or decoded_line == "data:":  # Skip empty decoded lines
+                    decoded_line = decode_response(line)
+                    if not decoded_line:
                         continue
-                            
-                    if decoded_line.startswith("data: "):
-                        json_str = decoded_line[6:].strip()  # Remove prefix and whitespace
-                        if not json_str or json_str == "[DONE]":  # Skip empty JSON or done marker
-                            continue
-                            
-                        parsed_data = json.loads(json_str)
-                        content = parsed_data["choices"][0]["delta"].get("content", "")
-                        if content and content.strip():  # Only yield non-empty content
-                            yield content
 
-    async def generate_chat_events(self, messages: List[Message], model: str, temperature: float = 1.32, max_new_tokens: int = 500):
-        """Generate OpenAI-compatible SSE events"""
-        chat_id = f"chatcmpl-{str(uuid4())}"
-        
-        # First chunk with role
-        event = {
-            'id': chat_id,
-            'object': 'chat.completion.chunk',
-            'created': int(time()),
-            'model': model,
-            'choices': [{
-                'index': 0,
-                'delta': {'role': 'assistant'},
-                'finish_reason': None
-            }]
-        }
-        yield f"data: {json.dumps(event)}\n\n"
-
-        # Content chunks
-        async for content in self.get_response_stream(
-            messages=messages,
-            temperature=temperature,
-            max_new_tokens=max_new_tokens
-        ):
-            event = {
-                'id': chat_id,
-                'object': 'chat.completion.chunk',
-                'created': int(time()),
-                'model': model,
-                'choices': [{
-                    'index': 0,
-                    'delta': {'content': content},
-                    'finish_reason': None
-                }]
-            }
-            yield f"data: {json.dumps(event)}\n\n"
-
-        # Final chunk
-        event = {
-            'id': chat_id,
-            'object': 'chat.completion.chunk',
-            'created': int(time()),
-            'model': model,
-            'choices': [{
-                'index': 0,
-                'delta': {},
-                'finish_reason': 'stop'
-            }]
-        }
-        yield f"data: {json.dumps(event)}\n\n"
-        yield "data: [DONE]\n\n"
+                    # Handle normal response chunks
+                    yield f"{decoded_line}"
+                        
+                    # Check if this is the final chunk with finish_reason: stop
+                    if (decoded_line.get("choices", [{}])[0].get("finish_reason") == "stop"):
+                        # Add the final [DONE] marker after the last chunk
+                        yield "[DONE]"
 
     # LLM API system prompt
     @property

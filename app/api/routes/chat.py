@@ -1,9 +1,5 @@
-import json
 import logging
 from typing import Union
-from typing import AsyncGenerator
-from uuid import uuid4
-from time import time
 from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
@@ -50,9 +46,8 @@ async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCo
         )
 
     return EventSourceResponse(
-        aimo.generate_chat_events(
+        aimo.get_response_stream(
             messages=request.messages,
-            model=request.model,
             temperature=request.temperature,
             max_new_tokens=request.max_tokens
         )
