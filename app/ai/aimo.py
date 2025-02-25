@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List
+from typing import List, Union
 
 import aiohttp
 
@@ -25,7 +25,7 @@ Usage:
 """
 
 
-def decode_response(line) -> dict | None:
+def decode_response(line) -> Union[dict, None]:
     """
     Decode the response from the LLM API
     """
