@@ -138,11 +138,16 @@ class AIMO:
                         continue
                         
                     decoded_line = decode_response(line)
-                    if not decoded_line or decoded_line == "[DONE]":
+                    if not decoded_line:
                         continue
 
-                    # Return upstream SSE formatted data
+                    # Handle normal response chunks
                     yield f"{decoded_line}"
+                        
+                    # Check if this is the final chunk with finish_reason: stop
+                    if (decoded_line.get("choices", [{}])[0].get("finish_reason") == "stop"):
+                        # Add the final [DONE] marker after the last chunk
+                        yield "[DONE]"
 
     # LLM API system prompt
     @property
