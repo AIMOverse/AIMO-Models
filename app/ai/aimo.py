@@ -142,7 +142,7 @@ class AIMO:
                         continue
 
                     # Handle normal response chunks
-                    yield dict(data=decoded_line)
+                    yield dict(data=json.dumps(decoded_line))
 
                 # Add the final [DONE] marker after the last chunk
                 yield dict(data="[DONE]")
