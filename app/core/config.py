@@ -1,7 +1,9 @@
+import os
 import socket
 from dataclasses import field
 from typing import Literal, List
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
 """
@@ -10,6 +12,9 @@ Date: 2025-1-20
 Description:
     This file is for settings of the application
 """
+
+# load .env file
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -21,6 +26,9 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[str] = field(default_factory=lambda: ["*"])  # Allowed origins for CORS
 
     PROJECT_NAME: str = "AIMO-Models"  # Title on generated documentation
+
+    # LLM API KEY
+    NEBULA_API_KEY: str = os.environ.get("NEBULA_API_KEY")
 
 
 settings = Settings()
