@@ -140,7 +140,8 @@ class AIMO:
                     decoded_line = decode_response(line)
                     if not decoded_line:
                         continue
-
+                    
+                    print(f"Decoded line: {decoded_line}")
                     # Handle normal response chunks
                     yield f"{decoded_line}"
                         
