@@ -11,14 +11,7 @@ def client():
 def test_analyze_emotion(client: TestClient):
     """Test normal emotion analysis case"""
     data = {
-        "messages": [
-            {
-                "role": "user",
-                "content": "I am feeling very happy today!"
-            }
-        ],
-        "temperature": 0.6,
-        "max_tokens": 100
+        "message": "I am feeling very happy today!"
     }
     response = client.post(
         f"{settings.API_V1_STR}/emotion/analyze",
@@ -26,107 +19,40 @@ def test_analyze_emotion(client: TestClient):
     )
     assert response.status_code == 200
     result = response.json()
-    assert "text" in result
+    # Only verify emotions field exists and is a list
     assert "emotions" in result
     assert isinstance(result["emotions"], list)
-
-def test_analyze_emotion_multiple_messages(client: TestClient):
-    """Test multiple messages case"""
-    data = {
-        "model": "aimo-chat",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an emotion analysis assistant"
-            },
-            {
-                "role": "user",
-                "content": "The weather is nice today"
-            },
-            {
-                "role": "assistant",
-                "content": "Indeed, it is"
-            },
-            {
-                "role": "user",
-                "content": "I feel very depressed and sad"
-            }
-        ]
-    }
-    
-    response = client.post(
-        f"{settings.API_V1_STR}/emotion/analyze",
-        json=data,
-    )
-    
-    assert response.status_code == 200
-    result = response.json()
-    
-    # Verify analysis of last user message
-    assert result["text"] == "I feel very depressed and sad"
-    
-    # Verify detected emotions
-    assert any(emotion in ["sadness", "depression"] for emotion in result["emotions"])
+    # Verify that it contains expected emotion for happy message
+    assert any(emotion in ["happiness", "joy"] for emotion in result["emotions"])
 
 def test_analyze_emotion_error_cases(client: TestClient):
     """Test error handling cases"""
-    
-    # Test with valid user message first (baseline test)
-    valid_data = {
-        "model": "aimo-chat",
-        "messages": [{
-            "role": "user",
-            "content": "I am feeling happy"
-        }]
+    # Test missing message field
+    invalid_data = {}
+    response = client.post(
+        f"{settings.API_V1_STR}/emotion/analyze",
+        json=invalid_data,
+    )
+    assert response.status_code == 422
+    error_detail = response.json()
+    assert "detail" in error_detail
+    # FastAPI validation error format includes a list of errors
+    assert isinstance(error_detail["detail"], list)
+    # Check the specific error message
+    validation_error = error_detail["detail"][0]
+    assert validation_error["type"] == "missing"
+    assert validation_error["loc"] == ["body", "message"]
+    assert "Field required" in validation_error["msg"]
+
+    # Test empty message
+    empty_data = {
+        "message": "   "  # Only whitespace
     }
     response = client.post(
         f"{settings.API_V1_STR}/emotion/analyze",
-        json=valid_data,
+        json=empty_data,
     )
     assert response.status_code == 200
-    
-    try:
-        # Test empty messages list - Expect IndexError
-        empty_data = {
-            "model": "aimo-chat",
-            "messages": []
-        }
-        response = client.post(
-            f"{settings.API_V1_STR}/emotion/analyze",
-            json=empty_data,
-        )
-    except IndexError:
-        # This is expected behavior
-        pass
-    
-    try:
-        # Test missing content - Expect type error
-        no_content_data = {
-            "model": "aimo-chat",
-            "messages": [{"role": "user"}]
-        }
-        response = client.post(
-            f"{settings.API_V1_STR}/emotion/analyze",
-            json=no_content_data,
-        )
-    except:
-        # This is expected behavior
-        pass
-        
-    try:
-        # Test non-user role - No role validation, analyze any content
-        assistant_msg_data = {
-            "model": "aimo-chat",
-            "messages": [{
-                "role": "assistant",
-                "content": "test content"
-            }]
-        }
-        response = client.post(
-            f"{settings.API_V1_STR}/emotion/analyze",
-            json=assistant_msg_data,
-        )
-        assert response.status_code == 200
-    except:
-        # Expected potential failure
-        pass
+    result = response.json()
+    assert "emotions" in result
+    assert isinstance(result["emotions"], list)
