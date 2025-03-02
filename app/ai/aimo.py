@@ -141,8 +141,6 @@ class AIMO:
                     if not decoded_line:
                         continue
                     
-                    print(f"Decoded line: {decoded_line}")
-                    # Handle normal response chunks
                     yield f"{decoded_line}"
                         
                     # Check if this is the final chunk with finish_reason: stop

@@ -50,7 +50,7 @@ async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCo
         )
 
     return EventSourceResponse(
-        aimo.generate_chat_events(
+        aimo.get_response_stream(
             messages=request.messages,
             model=request.model,
             temperature=request.temperature,
