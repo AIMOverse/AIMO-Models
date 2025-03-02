@@ -33,7 +33,7 @@ async def analyze_emotion(request: ChatCompletionRequest) -> EmotionResponse:
     text = last_message.content
     
     # Perform emotion analysis
-    emotions = emotion_model.predict(text, 0.1)
+    emotions = emotion_model.predict(text, 0.2)
     logger.info(f"🎭 Analyzed emotions for text: {text[:50]}...")
     
     return EmotionResponse(
