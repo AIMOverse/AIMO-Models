@@ -21,7 +21,22 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov
+          pip install -r requirements.txt
+
+      - name: Set environment variables
+        run: echo "NEBULA_API_KEY=${{ secrets.NEBULA_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Clean EmotionModule directory
+        run: |
+          if [ -d "app/ai/static/models/EmotionModule" ]; then
+            rm -rf app/ai/static/models/EmotionModule
+          fi
+
+      - name: Clone Hugging Face Model
+        env:
+          HF_ACCESS_TOKEN: ${{ secrets.WESLEY_XU_ACCESS_TOKEN }}
+        run: |
+          git clone https://Wes1eyyy:${HF_ACCESS_TOKEN}@huggingface.co/Wes1eyyy/AIMO-EmotionModule app/ai/static/models/EmotionModule
 
       - name: Run pytest with coverage
         run: pytest --cov=. --cov-report=term --cov-fail-under=90
