@@ -1,5 +1,6 @@
 import json
 import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -115,9 +116,6 @@ def test_sse_chat(client: TestClient):
 
         except json.JSONDecodeError as e:
             logging.warning(f"JSON parse error: {e} for line: {json_str}")
-            continue
-        except Exception as e:
-            logging.error(f"Unexpected error: {str(e)}")
             continue
 
     logging.info(f"Test summary: events={event_count}, role={received_role}, content={received_content}, done={received_done}")
