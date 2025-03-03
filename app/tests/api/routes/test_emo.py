@@ -52,7 +52,7 @@ def test_analyze_emotion_error_cases(client: TestClient):
         f"{settings.API_V1_STR}/emotion/analyze",
         json=empty_data,
     )
-    assert response.status_code == 200
-    result = response.json()
-    assert "emotions" in result
-    assert isinstance(result["emotions"], list)
+    assert response.status_code == 422
+    error_detail = response.json()
+    assert "detail" in error_detail
+    assert error_detail["detail"] == "Empty message provided"
