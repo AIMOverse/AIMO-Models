@@ -1,11 +1,11 @@
 import json
 import logging
-import os
-from typing import List
+from typing import List, Union
 
 import aiohttp
 
 from app.ai.emotion_model import EmotionModel
+from app.core.config import settings
 from app.exceptions.aimo_exceptions import AIMOException
 from app.models.chat import Message
 
@@ -25,7 +25,7 @@ Usage:
 """
 
 
-def decode_response(line):
+def decode_response(line) -> Union[dict, None]:
     """
     Decode the response from the LLM API
     """
@@ -54,7 +54,7 @@ class AIMO:
     def __init__(self):
         """Initialize AIMO instance"""
         # API configuration
-        self.api_key = os.environ.get("NEBULA_API_KEY")
+        self.api_key = settings.NEBULA_API_KEY
         if not self.api_key:
             raise ValueError("API Key not found, please set the environment variable NEBULA_API_KEY")
         # LLM API endpoint
@@ -140,13 +140,12 @@ class AIMO:
                     decoded_line = decode_response(line)
                     if not decoded_line:
                         continue
-                    
-                    yield f"{decoded_line}"
-                        
-                    # Check if this is the final chunk with finish_reason: stop
-                    if (decoded_line.get("choices", [{}])[0].get("finish_reason") == "stop"):
-                        # Add the final [DONE] marker after the last chunk
-                        yield "[DONE]"
+
+                    # Handle normal response chunks
+                    yield dict(data=json.dumps(decoded_line))
+
+                # Add the final [DONE] marker after the last chunk
+                yield dict(data="[DONE]")
 
     # LLM API system prompt
     @property

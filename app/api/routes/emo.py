@@ -27,10 +27,13 @@ async def analyze_emotion(request: EmotionRequest) -> EmotionResponse:
     Returns:
         EmotionResponse: Contains original text and detected emotions
     """
+    if not request.message.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Empty message provided"
+        )
     
     emotions = emotion_model.predict(request.message)
     logger.info(f"🎭 Analyzed emotions for text: {request.message[:50]}...")
     
-    return EmotionResponse(
-        emotions=emotions
-    )
+    return EmotionResponse(emotions=emotions)
