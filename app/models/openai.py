@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 from time import time
 from uuid import uuid4
