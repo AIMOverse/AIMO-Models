@@ -1,13 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.core.config import settings
 
+from app.core.config import settings
 from app.main import app
+
 
 @pytest.fixture
 def client():
     return TestClient(app)
 
+
+# Test emotion analysis endpoint
 def test_analyze_emotion(client: TestClient):
     """Test normal emotion analysis case"""
     data = {
