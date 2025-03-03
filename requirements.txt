@@ -25,6 +25,7 @@ pytest-cov~=6.0.0
 
 # Network Libraries
 aiohttp~=3.11.11
+httpx~=0.28.1
 
 # environment variables
 python-dotenv~=1.0.1
