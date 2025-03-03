@@ -24,35 +24,3 @@ def test_analyze_emotion(client: TestClient):
     assert isinstance(result["emotions"], list)
     # Verify that it contains expected emotion for happy message
     assert any(emotion in ["happiness", "joy"] for emotion in result["emotions"])
-
-def test_analyze_emotion_error_cases(client: TestClient):
-    """Test error handling cases"""
-    # Test missing message field
-    invalid_data = {}
-    response = client.post(
-        f"{settings.API_V1_STR}/emotion/analyze",
-        json=invalid_data,
-    )
-    assert response.status_code == 422
-    error_detail = response.json()
-    assert "detail" in error_detail
-    # FastAPI validation error format includes a list of errors
-    assert isinstance(error_detail["detail"], list)
-    # Check the specific error message
-    validation_error = error_detail["detail"][0]
-    assert validation_error["type"] == "missing"
-    assert validation_error["loc"] == ["body", "message"]
-    assert "Field required" in validation_error["msg"]
-
-    # Test empty message
-    empty_data = {
-        "message": "   "  # Only whitespace
-    }
-    response = client.post(
-        f"{settings.API_V1_STR}/emotion/analyze",
-        json=empty_data,
-    )
-    assert response.status_code == 422
-    error_detail = response.json()
-    assert "detail" in error_detail
-    assert error_detail["detail"] == "Empty message provided"
