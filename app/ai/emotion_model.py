@@ -38,7 +38,7 @@ class EmotionModel:
 
         # Ensure the model directory exists
         if not model_path.exists():
-            raise FileNotFoundError(f"Sentiment analysis model directory does not exist: {model_path}")
+            raise FileNotFoundError(f"Model directory does not exist: {model_path}")
             
         # Load emotion labels
         with open(mapping_file, "r", encoding="utf-8") as f:
