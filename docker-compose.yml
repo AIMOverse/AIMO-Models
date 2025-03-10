@@ -1,27 +1,14 @@
 version: '3.8'
 
 services:
-  aimo_service:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: aimoverse/aimo-emotion-model:latest
-    container_name: aimo-emotion-model
-    restart: always
-    ports:
-      - "80:80"  # Nginx port
-      - "5000:5000"  # Application port (optional, if you want direct access to the app)
-    volumes:
-      - ./app/ai/static/data:/app/app/ai/static/data
-      - ./app/ai/static/models:/app/app/ai/static/models
-      - ./logs:/var/log/supervisor
+      args:
+        HF_ACCESS_TOKEN: ${HF_ACCESS_TOKEN}  # Pass Hugging Face token during build
     environment:
-      - PYTHONUNBUFFERED=1
-      - FORCE_CPU=1
-      - NEBULA_API_KEY=your_api_key_here
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+      - NEBULA_API_KEY=${NEBULA_API_KEY}  # Set environment variable for runtime
+    ports:
+      - "8000:8000"  # Expose the application on port 8000
+    restart: always  # Restart the container automatically in case of failure
