@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from typing import List
 
@@ -39,32 +38,7 @@ class EmotionModel:
 
         # Ensure the model directory exists
         if not model_path.exists():
-            # If the model doesn't exist, try to download it from Hugging Face
-            logging.info(f"Model directory does not exist: {model_path}. Attempting to download from Hugging Face...")
-            try:
-                os.environ["TRANSFORMERS_OFFLINE"] = "0"  # Allow online downloads
-                os.makedirs(model_path, exist_ok=True)
-                
-                # Get Hugging Face token from environment variables
-                hf_token = os.environ.get("HF_TOKEN")
-                
-                if hf_token:
-                    logging.info("Using Hugging Face token from environment variable")
-                    self.tokenizer = AutoTokenizer.from_pretrained("Wes1eyyy/AIMO-EmotionModule", use_auth_token=hf_token)
-                    self.model = AutoModelForSequenceClassification.from_pretrained("Wes1eyyy/AIMO-EmotionModule", use_auth_token=hf_token)
-                else:
-                    logging.warning("No Hugging Face token provided, attempting anonymous access (may fail for private models)")
-                    self.tokenizer = AutoTokenizer.from_pretrained("Wes1eyyy/AIMO-EmotionModule")
-                    self.model = AutoModelForSequenceClassification.from_pretrained("Wes1eyyy/AIMO-EmotionModule")
-                
-                # Save the model locally
-                self.tokenizer.save_pretrained(str(model_path))
-                self.model.save_pretrained(str(model_path))
-                logging.info(f"Model successfully downloaded and saved to {model_path}")
-            except Exception as e:
-                raise RuntimeError(f"Failed to download model from Hugging Face: {str(e)}")
-        else:
-            logging.info(f"Using locally cached model from: {model_path}")
+            raise FileNotFoundError(f"Sentiment analysis model directory does not exist: {model_path}")
             
         # Load emotion labels
         with open(mapping_file, "r", encoding="utf-8") as f:
