@@ -1,10 +1,11 @@
 FROM python:3.9-slim
 
-# Install necessary system dependencies, including Nginx
+# Install necessary system dependencies
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     curl \
     nginx \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install specific version of supervisor
@@ -20,7 +21,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install supervisor==4.2.5 gunicorn==23.0.0
+RUN pip install --no-cache-dir -r requirements.txt gunicorn==23.0.0
 
 # Copy application code
 COPY app ./app
@@ -40,7 +41,20 @@ RUN chmod +x /start.sh
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Set API_KEY
+# Hugging Face token will be provided at build time
+ARG HF_TOKEN=""
+ENV HF_TOKEN=${HF_TOKEN}
+
+# Download models at build time (if token is provided)
+RUN if [ -n "$HF_TOKEN" ]; then \
+        python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; \
+        tokenizer = AutoTokenizer.from_pretrained('Wes1eyyy/AIMO-EmotionModule', use_auth_token='${HF_TOKEN}'); \
+        model = AutoModelForSequenceClassification.from_pretrained('Wes1eyyy/AIMO-EmotionModule', use_auth_token='${HF_TOKEN}'); \
+        tokenizer.save_pretrained('/app/app/ai/static/models/EmotionModule'); \
+        model.save_pretrained('/app/app/ai/static/models/EmotionModule')"; \
+    fi
+
+# API_KEY
 ENV NEBULA_API_KEY = ""
 
 # Health check
