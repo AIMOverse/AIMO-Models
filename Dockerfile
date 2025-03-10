@@ -1,68 +1,30 @@
-FROM python:3.9-slim
+# 使用官方 Python 3.11 slim 版本作为基础镜像
+FROM python:3.11-slim
 
-# Install necessary system dependencies
-RUN apt-get update && apt-get install -y \
-    libssl-dev \
-    curl \
-    nginx \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install specific version of supervisor
-RUN pip install supervisor==4.2.5
-
-# Create necessary directories
-RUN mkdir -p /var/log/supervisor /app/app/ai/static/models/EmotionModule /app/app/ai/static/data
-
-# Set working directory
+# 设置工作目录
 WORKDIR /app
 
-# Copy requirements file
+# 安装 `git` 以支持 `git clone`
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# 先复制 requirements.txt 以利用 Docker 缓存
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt gunicorn==23.0.0
+# 安装依赖
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy application code
-COPY app ./app
+# 设置环境变量（NEBULA_API_KEY 用于应用运行时）
+ENV NEBULA_API_KEY=${NEBULA_API_KEY}
 
-# Copy Nginx configuration files
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY aimo.conf /etc/nginx/conf.d/default.conf
+# 克隆 Hugging Face 模型（避免暴露 HF_ACCESS_TOKEN）
+ARG HF_ACCESS_TOKEN
+RUN git clone https://Wes1eyyy:${HF_ACCESS_TOKEN}@huggingface.co/Wes1eyyy/AIMO-EmotionModule app/ai/static/models/EmotionModule
 
-# Copy supervisor configuration
-COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY aimo_models.conf /etc/supervisor/conf.d/aimo_models.conf
+# 复制应用代码到容器中
+COPY . .
 
-# Add startup script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+# 暴露端口
+EXPOSE 8000
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-
-# Hugging Face token will be provided at build time
-ARG HF_TOKEN=""
-ENV HF_TOKEN=${HF_TOKEN}
-
-# Download models at build time (if token is provided)
-RUN if [ -n "$HF_TOKEN" ]; then \
-        python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; \
-        tokenizer = AutoTokenizer.from_pretrained('Wes1eyyy/AIMO-EmotionModule', use_auth_token='${HF_TOKEN}'); \
-        model = AutoModelForSequenceClassification.from_pretrained('Wes1eyyy/AIMO-EmotionModule', use_auth_token='${HF_TOKEN}'); \
-        tokenizer.save_pretrained('/app/app/ai/static/models/EmotionModule'); \
-        model.save_pretrained('/app/app/ai/static/models/EmotionModule')"; \
-    fi
-
-# API_KEY
-ENV NEBULA_API_KEY = ""
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:80/health || exit 1
-
-# Expose Nginx port
-EXPOSE 80 5000
-
-# Startup command
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# 运行命令
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "4", "-b", "0.0.0.0:8000", "app.main:app"]

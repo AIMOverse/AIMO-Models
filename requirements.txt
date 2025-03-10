@@ -11,6 +11,7 @@ pydantic_core~=2.27.2
 pydantic-settings~=2.7.1
 typing_extensions~=4.12.2
 starlette~=0.41.3
+gunicorn
 # SSE
 sse-starlette~=2.2.1
 
