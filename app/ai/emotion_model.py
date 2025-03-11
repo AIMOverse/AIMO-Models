@@ -21,11 +21,10 @@ class EmotionModel:
     def __init__(self):
         """
         Initialize the sentiment analysis model
-
         """
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # Get the absolute path of the current file's directory
+        # Get the absolute path of the current file directory
         current_dir = Path(__file__).parent
 
         # Use the correct mapping file path
@@ -40,12 +39,12 @@ class EmotionModel:
         # Ensure the model directory exists
         if not model_path.exists():
             raise FileNotFoundError(f"Model directory does not exist: {model_path}")
-
-        # Load sentiment labels
+            
+        # Load emotion labels
         with open(mapping_file, "r", encoding="utf-8") as f:
             self.emotion_labels = [line.strip() for line in f.readlines()]
 
-        # Load tokenizer & model using absolute path
+        # Load tokenizer and model
         logging.info(f"Loading sentiment analysis model: {model_path} to {self.device} ...")
         self.tokenizer = AutoTokenizer.from_pretrained(str(model_path))
         self.model = AutoModelForSequenceClassification.from_pretrained(str(model_path)).to(self.device)

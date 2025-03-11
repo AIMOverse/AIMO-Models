@@ -15,6 +15,8 @@ AIMO is a lightweight, large-language model backend designed to provide emotiona
 - Python 3.6 or higher
 - CUDA 12.4 (for GPU support)
 
+### Method 1: Standard Setup
+
 Follow the steps below to set up AIMO on your system:
 
 ```bash
@@ -26,12 +28,70 @@ cd AIMO-Models
 pip install -r requirements.txt
 ```
 
+### Method 2: Docker Setup
+
+AIMO can also be deployed using Docker for easier dependency management and deployment:
+
+```bash
+# Clone the repository
+git clone https://github.com/AIMOverse/AIMO-Models.git
+cd AIMO-Models
+
+# Build Docker Image and pass HF_ACCESS_TOKEN
+docker build --build-arg HF_ACCESS_TOKEN=<your_hf_token> -t my-fastapi-app .
+
+# Run the Docker container
+docker run -p 8000:8000 -e NEBULA_API_KEY=<your_api_key> my-fastapi-app
+```
+
+## Deployment on Phala Network
+
+To deploy AIMO on Phala Network, follow these steps:
+
+1. Ensure you have the necessary API keys:
+   - `HF_TOKEN`: For downloading Hugging Face models
+
+2. Build the Docker image with the required environment variables:
+
+```bash
+# Export your API keys as environment variables
+export HF_TOKEN="your_huggingface_token_here"
+
+# Build the Docker image
+docker build --build-arg HF_TOKEN=$HF_TOKEN -t aimoverse/aimo-emotion-model .
+```
+
+3. Push the image to a container registry accessible by the Phala Network:
+
+```bash
+# Tag the image for your registry
+docker tag aimoverse/aimo-emotion-model your-registry/aimoverse/aimo-emotion-model:latest
+
+# Push to registry
+docker push your-registry/aimoverse/aimo-emotion-model:latest
+```
+
+4. Deploy on Phala using their container deployment interface.
+
+## Environment Variables
+
+The following environment variables are used by AIMO:
+
+| Variable         | Description                                      | Required | Time of Requirement    |
+|------------------|--------------------------------------------------|----------|------------------------|
+| `NEBULA_API_KEY` | API key for LLM service                          | Yes      | During deployment      |
+| `HF_TOKEN`       | Hugging Face access token for downloading models | Yes      | During building Images |
+
 ## Usage
 
 Start the AIMO server using the following command:
 
 ```bash
+# If installed directly
 fastapi run app/main.py
+
+# If using Docker
+docker run -p 8000:8000 -e NEBULA_API_KEY=your_key -d aimoverse/aimo-emotion-model
 ```
 
 Once the server is running, you can integrate it with your applications or test it through API endpoints.
@@ -74,8 +134,26 @@ Below is an example of the main endpoint:
 #### Response:
 ```json
 {
-    "role": "assistant",
-    "content": "Hi there! How can I help you today?"
+   "id": "chatcmpl-8ca23289-da13-4374-87a4-9020f5bbbebe",
+   "object": "chat.completion",
+   "created": 1741649537,
+   "model": "aimo-chat",
+   "choices": [
+      {
+         "index": 0,
+         "message": {
+            "role": "assistant",
+            "content": "Hello! It's nice to meet you. How's your day going so far?"
+         },
+         "delta": null,
+         "finish_reason": "stop"
+      }
+   ],
+   "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+   }
 }
 ```
 

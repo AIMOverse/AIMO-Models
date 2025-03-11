@@ -1,14 +1,9 @@
 # Core Machine Learning & NLP Libraries
 torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
-torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
-torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 transformers==4.48.3
-tokenizers==0.21.0
-datasets==3.2.0
-evaluate==0.4.3
-safetensors==0.5.2
 numpy~=2.0.2
 
+# FastAPI Libraries
 uvicorn~=0.34.0
 fastapi~=0.115.6
 pydantic~=2.10.5
@@ -16,6 +11,7 @@ pydantic_core~=2.27.2
 pydantic-settings~=2.7.1
 typing_extensions~=4.12.2
 starlette~=0.41.3
+gunicorn
 # SSE
 sse-starlette~=2.2.1
 

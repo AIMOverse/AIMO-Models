@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HF_ACCESS_TOKEN: ${HF_ACCESS_TOKEN}  # Pass Hugging Face token during build
+    environment:
+      - NEBULA_API_KEY=${NEBULA_API_KEY}  # Set environment variable for runtime
+    ports:
+      - "8000:8000"  # Expose the application on port 8000
+    restart: always  # Restart the container automatically in case of failure
