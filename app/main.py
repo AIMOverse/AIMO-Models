@@ -33,7 +33,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 # Initialize the FastAPI application
 app = FastAPI(
     title=settings.PROJECT_NAME,  # Title on generated documentation
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",  # Path to generated OpenAPI documentation
+    openapi_url=f"{settings.BASE_URL}/openapi.json",  # Path to generated OpenAPI documentation
     generate_unique_id_function=custom_generate_unique_id,  # Custom function for generating unique route IDs
     version=settings.version,  # Version of the API
     debug=True if settings.ENVIRONMENT == 'local' else False
@@ -49,11 +49,13 @@ app.add_middleware(
 )
 
 # Add Auth Middleware
-app.add_middleware(JWTMiddleware)
+app.add_middleware(JWTMiddleware,
+                   base_url=settings.BASE_URL,
+                   excluded_paths=settings.AUTH_EXCLUDE_PATHS)
 
 
 # Register the exception handlers
 register_exception_handlers(app)
 
 # Include the API router with a prefix
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.BASE_URL)

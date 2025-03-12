@@ -32,7 +32,7 @@ def test_generate(client: TestClient) -> None:
         "stream": False
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",
+        f"{settings.BASE_URL}/chat/completions",
         json=data,
     )
     assert response.status_code == 200
@@ -52,7 +52,7 @@ def test_sse_chat(client: TestClient):
         "stream": True
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",
+        f"{settings.BASE_URL}/chat/completions",
         json=data,
     )
 

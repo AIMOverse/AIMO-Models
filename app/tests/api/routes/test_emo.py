@@ -17,7 +17,7 @@ def test_analyze_emotion(client: TestClient):
         "message": "I am feeling very happy today!"
     }
     response = client.post(
-        f"{settings.API_V1_STR}/emotion/analyze",
+        f"{settings.BASE_URL}/emotion/analyze",
         json=data,
     )
     assert response.status_code == 200
