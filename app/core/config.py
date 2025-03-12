@@ -30,5 +30,11 @@ class Settings(BaseSettings):
     # LLM API KEY
     NEBULA_API_KEY: str = os.environ.get("NEBULA_API_KEY")
 
+    # JWT Secret Key
+    SECRET_KEY: str = os.environ.get("SECRET_KEY")
+
+    # JWT Expire Time
+    ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
+
 
 settings = Settings()

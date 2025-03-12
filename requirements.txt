@@ -25,3 +25,6 @@ httpx~=0.28.1
 
 # environment variables
 python-dotenv~=1.0.1
+
+# JWT
+pyjwt~=2.10.1

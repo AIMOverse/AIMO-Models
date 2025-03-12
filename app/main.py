@@ -7,6 +7,7 @@ from fastapi.routing import APIRoute
 from app.api.main import api_router
 from app.core.config import settings
 from app.exception_handler.exception_handler import register_exception_handlers
+from app.middleware.jwt_middleware import JWTMiddleware
 
 """
 Author: Jack Pan
@@ -46,6 +47,10 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"]  # Allow all headers
 )
+
+# Add Auth Middleware
+app.add_middleware(JWTMiddleware)
+
 
 # Register the exception handlers
 register_exception_handlers(app)
