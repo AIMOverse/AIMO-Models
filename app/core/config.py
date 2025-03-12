@@ -36,5 +36,8 @@ class Settings(BaseSettings):
     # JWT Expire Time
     ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
 
+    # Invitation Code Expire Time
+    INVITATION_CODE_EXPIRE_TIME: int = 7  # days
+
 
 settings = Settings()
