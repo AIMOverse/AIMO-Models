@@ -41,7 +41,9 @@ class Settings(BaseSettings):
 
     # Authentication Exclude Paths
     AUTH_EXCLUDE_PATHS: List[str] = field(
-        default_factory=lambda: ["/auth/check-invitation-code", "/auth/generate-invitation-code"])
+        default_factory=lambda: ["/auth/check-invitation-code",
+                                 "/invitation-code/generate-invitation-code",
+                                 "/invitation-code/get-available-invitation-codes"])
 
     # Admin API Key
     ADMIN_API_KEY: str = os.environ.get("ADMIN_API_KEY")

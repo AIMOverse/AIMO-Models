@@ -70,3 +70,12 @@ class InvitationCodeUtils:
         self._save_invitation_codes(existing_invitation_codes)
         # Return the result
         return result
+
+    def get_available_invitation_codes(self) -> List[str]:
+        """
+        Get all available invitation codes
+        """
+        existing_invitation_codes = self._get_invitation_codes()  # Get all the existing invitation codes
+        # Filter the active codes
+        active_codes: List[str] = [code_.code for code_ in existing_invitation_codes if code_.is_active]
+        return active_codes

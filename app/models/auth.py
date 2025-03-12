@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -22,3 +24,8 @@ class CheckInvitationCodeResponse(BaseModel):
 class GenerateInvitationCodeResponse(BaseModel):
     """Response format for generating an invitation code"""
     invitation_code: str = Field(..., description="The generated invitation code")
+
+
+class GetAvailableInvitationCodesResponse(BaseModel):
+    """Response format for getting available invitation codes"""
+    invitation_codes: List[str] = Field(..., description="The available invitation codes")
