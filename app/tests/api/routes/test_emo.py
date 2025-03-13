@@ -1,24 +1,19 @@
-import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from app.core.config import settings
-from app.main import app
-
-
-@pytest.fixture
-def client():
-    return TestClient(app)
 
 
 # Test emotion analysis endpoint
-def test_analyze_emotion(client: TestClient):
+def test_analyze_emotion(client: TestClient, get_access_token):
     """Test normal emotion analysis case"""
     data = {
         "message": "I am feeling very happy today!"
     }
     response = client.post(
-        f"{settings.API_V1_STR}/emotion/analyze",
+        url=f"{settings.BASE_URL}/emotion/analyze",
         json=data,
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {get_access_token}"},
     )
     assert response.status_code == 200
     result = response.json()

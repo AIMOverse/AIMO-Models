@@ -1,11 +1,9 @@
 import json
 import logging
 
-import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from app.core.config import settings
-from app.main import app
 
 """
 Author: Jack Pan
@@ -14,12 +12,8 @@ Description:
     This file is for testing chat related APIs.
 """
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
 # Test generate a response from the input
-def test_generate(client: TestClient) -> None:
+def test_generate(client: TestClient, get_access_token) -> None:
     data = {
         "messages": [
             {
@@ -32,14 +26,16 @@ def test_generate(client: TestClient) -> None:
         "stream": False
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",
+        url=f"{settings.BASE_URL}/chat/completions",
         json=data,
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {get_access_token}"},
     )
     assert response.status_code == 200
 
 
 # Test SSE endpoint
-def test_sse_chat(client: TestClient):
+def test_sse_chat(client: TestClient, get_access_token) -> None:
     data = {
         "messages": [
             {
@@ -52,8 +48,10 @@ def test_sse_chat(client: TestClient):
         "stream": True
     }
     response = client.post(
-        f"{settings.API_V1_STR}/chat/completions",
+        url=f"{settings.BASE_URL}/chat/completions",
         json=data,
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {get_access_token}"},
     )
 
     assert response.status_code == 200

@@ -19,7 +19,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     version: str = "1.0.0"  # Version of the API
-    API_V1_STR: str = f"/api/v{version}"  # Path to the base API
+    BASE_URL: str = f"/api/v{version}"  # Path to the base API
     ENVIRONMENT: Literal[
         "local", "staging", "production"] = "production" if "ai-model-service" in socket.gethostname() else "local"  # Environment of the application
 
@@ -29,6 +29,24 @@ class Settings(BaseSettings):
 
     # LLM API KEY
     NEBULA_API_KEY: str = os.environ.get("NEBULA_API_KEY")
+
+    # JWT Secret Key
+    SECRET_KEY: str = os.environ.get("SECRET_KEY")
+
+    # JWT Expire Time
+    ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
+
+    # Invitation Code Expire Time
+    INVITATION_CODE_EXPIRE_TIME: int = 7  # days
+
+    # Authentication Exclude Paths
+    AUTH_EXCLUDE_PATHS: List[str] = field(
+        default_factory=lambda: ["/auth/check-invitation-code",
+                                 "/invitation-code/generate-invitation-code",
+                                 "/invitation-code/get-available-invitation-codes"])
+
+    # Admin API Key
+    ADMIN_API_KEY: str = os.environ.get("ADMIN_API_KEY")
 
 
 settings = Settings()

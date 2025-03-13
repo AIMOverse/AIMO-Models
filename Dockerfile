@@ -1,30 +1,39 @@
-# Use the official Python 3.11 slim version as the base image
-FROM python:3.11-slim
+# Use the official NVIDIA CUDA 12.4 runtime image (Ubuntu 22.04)
+FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
 
 # Set the working directory
 WORKDIR /app
 
-# Install `git` to support `git clone`
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# Update system packages and install necessary dependencies (including git and Python)
+RUN apt-get update && apt-get install -y \
+    git \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt first to leverage Docker cache
+# Upgrade pip to the latest version
+RUN python3.11 -m pip install --upgrade pip
+
+# Copy requirements.txt and install dependencies
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# Install dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Set environment variable (NEBULA_API_KEY is used at runtime)
+# Set environment variables
 ENV NEBULA_API_KEY=${NEBULA_API_KEY}
+ENV SECRET_KEY=${SECRET_KEY}
+ENV ADMIN_API_KEY=${ADMIN_API_KEY}
 
-# Clone Hugging Face model (avoid exposing HF_ACCESS_TOKEN)
+# Clone the Hugging Face model repository using a secure token
 ARG HF_ACCESS_TOKEN
 RUN git clone https://Wes1eyyy:${HF_ACCESS_TOKEN}@huggingface.co/Wes1eyyy/AIMO-EmotionModule app/ai/static/models/EmotionModule
 
-# Copy application code into the container
+# Copy the application code into the container
 COPY . .
 
-# Expose port 8000
+# Expose port 8000 for the application
 EXPOSE 8000
 
-# Run the application
+# Run the application using Gunicorn with Uvicorn workers
 CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "4", "-b", "0.0.0.0:8000", "app.main:app"]
