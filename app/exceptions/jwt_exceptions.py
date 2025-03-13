@@ -8,3 +8,8 @@ class JWTException(ServerException):
 
     def __init__(self, message: str = "JWT token error"):
         super().__init__(message, 401)
+
+
+class JWTException(Exception):
+    """Exception raised for JWT token related errors"""
+    pass
