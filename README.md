@@ -77,10 +77,12 @@ docker push your-registry/aimoverse/aimo-emotion-model:latest
 
 The following environment variables are used by AIMO:
 
-| Variable         | Description                                      | Required | Time of Requirement    |
-|------------------|--------------------------------------------------|----------|------------------------|
-| `NEBULA_API_KEY` | API key for LLM service                          | Yes      | During deployment      |
-| `HF_TOKEN`       | Hugging Face access token for downloading models | Yes      | During building Images |
+| Variable          | Description                                      | Required | Time of Requirement         |
+|-------------------|--------------------------------------------------|----------|-----------------------------|
+| `HF_ACCESS_TOKEN` | Hugging Face access token for downloading models | Yes      | During building Images      |
+| `NEBULA_API_KEY`  | API key for LLM service                          | Yes      | During running applications |
+| `SECRET_KEY`      | Secret Key for JWT Tokens                        | Yes      | During running applications |
+| `ADMIN_API_KEY`   | Admin Key for manage invitation codes            | Yes      | During running applications |
 
 ## Usage
 

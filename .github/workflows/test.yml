@@ -27,7 +27,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Set environment variables
-        run: echo "NEBULA_API_KEY=${{ secrets.NEBULA_API_KEY }}" >> $GITHUB_ENV
+        run: |
+          echo "NEBULA_API_KEY=${{ secrets.NEBULA_API_KEY }}" >> $GITHUB_ENV
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+          echo "ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}" >> $GITHUB_ENV
+      
 
       - name: Clean EmotionModule directory
         run: |
