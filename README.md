@@ -38,7 +38,7 @@ git clone https://github.com/AIMOverse/AIMO-Models.git
 cd AIMO-Models
 
 # Build Docker Image and pass HF_ACCESS_TOKEN
-docker build --build-arg HF_ACCESS_TOKEN=<your_hf_token> -t my-fastapi-app .
+docker build --build-arg HF_ACCESS_TOKEN=<your_hf_access_token> -t my-fastapi-app .
 
 # Run the Docker container
 docker run -p 8000:8000 -e NEBULA_API_KEY=<your_api_key> my-fastapi-app
@@ -49,16 +49,16 @@ docker run -p 8000:8000 -e NEBULA_API_KEY=<your_api_key> my-fastapi-app
 To deploy AIMO on Phala Network, follow these steps:
 
 1. Ensure you have the necessary API keys:
-   - `HF_TOKEN`: For downloading Hugging Face models
+   - `HF_ACCESS_TOKEN`: For downloading Hugging Face models
 
 2. Build the Docker image with the required environment variables:
 
 ```bash
 # Export your API keys as environment variables
-export HF_TOKEN="your_huggingface_token_here"
+export HF_ACCESS_TOKEN="your_huggingface_token_here"
 
 # Build the Docker image
-docker build --build-arg HF_TOKEN=$HF_TOKEN -t aimoverse/aimo-emotion-model .
+docker build --build-arg HF_ACCESS_TOKEN=$HF_ACCESS_TOKEN -t aimoverse/aimo-emotion-model .
 ```
 
 3. Push the image to a container registry accessible by the Phala Network:
@@ -91,9 +91,11 @@ Start the AIMO server using the following command:
 ```bash
 # If installed directly
 fastapi run app/main.py
+```
 
+```bash
 # If using Docker
-docker run -p 8000:8000 -e NEBULA_API_KEY=your_key -d aimoverse/aimo-emotion-model
+docker run -p 8000:8000 -e NEBULA_API_KEY=your_key -e SECRET_KEY=your_secret_key -e ADMIN_API_KEY=your_admin_api_key -d aimoverse/aimo-emotion-model
 ```
 
 Once the server is running, you can integrate it with your applications or test it through API endpoints.
