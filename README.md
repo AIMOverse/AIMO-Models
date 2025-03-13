@@ -38,10 +38,10 @@ git clone https://github.com/AIMOverse/AIMO-Models.git
 cd AIMO-Models
 
 # Build Docker Image and pass HF_ACCESS_TOKEN
-docker build --build-arg HF_ACCESS_TOKEN=<your_hf_access_token> -t my-fastapi-app .
+docker build --build-arg HF_ACCESS_TOKEN=<your_hf_access_token> -t aimo-models-app .
 
 # Run the Docker container
-docker run -p 8000:8000 -e NEBULA_API_KEY=<your_api_key> my-fastapi-app
+docker run -p 8000:8000 -e NEBULA_API_KEY=<your_key> -e SECRET_KEY=<your_secret_key> -e ADMIN_API_KEY=<your_admin_api_key>  aimo-models-app
 ```
 
 ## Deployment on Phala Network
