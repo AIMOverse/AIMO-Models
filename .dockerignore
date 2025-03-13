@@ -316,3 +316,4 @@ cython_debug/
 .idea/
 
 static/*
+!static/.keep

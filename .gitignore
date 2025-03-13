@@ -314,4 +314,6 @@ app/ai/static/models/EmotionModule/*
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+# keep static folder
 static/*
+!static/.keep
