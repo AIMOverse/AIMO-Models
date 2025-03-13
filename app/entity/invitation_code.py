@@ -14,7 +14,7 @@ class InvitationCode:
     def to_dict(self):
         return {
             "code": self.code,
-            "expiration_time": self.expiration_time.timestamp(),  # 转换回时间戳
+            "expiration_time": self.expiration_time.timestamp(),  # turn back to timestamp
             "used": self.used,
         }
 
