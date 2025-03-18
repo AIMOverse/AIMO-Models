@@ -31,6 +31,7 @@ jobs:
           echo "NEBULA_API_KEY=${{ secrets.NEBULA_API_KEY }}" >> $GITHUB_ENV
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
           echo "ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}" >> $GITHUB_ENV
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
       
 
       - name: Clean EmotionModule directory
