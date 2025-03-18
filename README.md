@@ -41,7 +41,7 @@ cd AIMO-Models
 docker build --build-arg HF_ACCESS_TOKEN=<your_hf_access_token> -t aimo-models-app .
 
 # Run the Docker container
-docker run --hostname ai-model-service -p 8000:8000 -e NEBULA_API_KEY=<your_key> -e SECRET_KEY=<your_secret_key> -e ADMIN_API_KEY=<your_admin_api_key>  aimo-models-app
+docker run --hostname ai-model-service -p 8000:8000 -e NEBULA_API_KEY=<your_key> -e SECRET_KEY=<your_secret_key> -e ADMIN_API_KEY=<your_admin_api_key> -e DATABASE_URL=<your_database_url> aimo-models-app
 ```
 
 ## Deployment on Phala Network
@@ -95,7 +95,7 @@ fastapi run app/main.py
 
 ```bash
 # If using Docker
-docker run --hostname ai-model-service -p 8000:8000 -e NEBULA_API_KEY=your_key -e SECRET_KEY=your_secret_key -e ADMIN_API_KEY=your_admin_api_key -d aimoverse/aimo-emotion-model
+docker run --hostname ai-model-service -p 8000:8000 -e NEBULA_API_KEY=your_key -e SECRET_KEY=your_secret_key -e ADMIN_API_KEY=your_admin_api_key -e DATABASE_URL=your_database_url -d aimoverse/aimo-emotion-model
 ```
 
 Once the server is running, you can integrate it with your applications or test it through API endpoints.
