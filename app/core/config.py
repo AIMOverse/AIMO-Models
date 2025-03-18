@@ -48,5 +48,8 @@ class Settings(BaseSettings):
     # Admin API Key
     ADMIN_API_KEY: str = os.environ.get("ADMIN_API_KEY")
 
+    # Database URL
+    DATABASE_URL: str = os.environ.get("DATABASE_URL")
+
 
 settings = Settings()
