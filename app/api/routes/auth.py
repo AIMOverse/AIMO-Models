@@ -38,6 +38,10 @@ async def check_invitation_code(data: CheckInvitationCodeRequest) -> CheckInvita
         invitation_code = session.get(InvitationCode, code)  # Get the invitation code from the database
         if not invitation_code or invitation_code.used or invitation_code.expiration_time < datetime.datetime.now():
             raise AuthException(401, "Invalid invitation code")
+        invitation_code.used = True
+        session.add(invitation_code)
+        session.commit()
+        session.refresh(invitation_code)
     access_token = jwt_utils.generate_token({"InvitationCode": code})  # Generate a new access token
     return CheckInvitationCodeResponse(access_token=access_token)
 
