@@ -1,7 +1,7 @@
 import datetime
 import os
 
-import jwt  # 确保这里导入了PyJWT
+import jwt
 
 from app.exceptions.jwt_exceptions import JWTException
 
