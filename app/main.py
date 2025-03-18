@@ -6,6 +6,7 @@ from fastapi.routing import APIRoute
 
 from app.api.main import api_router
 from app.core.config import settings
+from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
 from app.middleware.jwt_middleware import JWTMiddleware
 
@@ -59,3 +60,9 @@ register_exception_handlers(app)
 
 # Include the API router with a prefix
 app.include_router(api_router, prefix=settings.BASE_URL)
+
+
+# Import the database initialization function
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()

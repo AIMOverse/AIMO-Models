@@ -12,6 +12,11 @@ pydantic-settings~=2.7.1
 typing_extensions~=4.12.2
 starlette~=0.41.3
 gunicorn
+
+# Database Libraries
+psycopg2
+sqlmodel
+
 # SSE
 sse-starlette~=2.2.1
 

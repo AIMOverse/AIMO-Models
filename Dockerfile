@@ -24,6 +24,7 @@ RUN pip install -r requirements.txt
 ENV NEBULA_API_KEY=${NEBULA_API_KEY}
 ENV SECRET_KEY=${SECRET_KEY}
 ENV ADMIN_API_KEY=${ADMIN_API_KEY}
+ENV DATABASE_URL=${DATABASE_URL}
 
 # Clone the Hugging Face model repository using a secure token
 ARG HF_ACCESS_TOKEN

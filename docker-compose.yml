@@ -7,10 +7,12 @@ services:
       dockerfile: Dockerfile
       args:
         HF_ACCESS_TOKEN: ${HF_ACCESS_TOKEN}  # Pass Hugging Face token during build
+    hostname: ai-model-service
     environment:
       - NEBULA_API_KEY=${NEBULA_API_KEY}  # Set environment variable for runtime
       - SECRET_KEY=${SECRET_KEY}  # Set environment variable for runtime
       - ADMIN_API_KEY=${ADMIN_API_KEY}  # Set environment variable for runtime
+      - DATABASE_URL=${DATABASE_URL}  # Set environment variable for runtime
     ports:
       - "8000:8000"  # Expose the application on port 8000
     restart: always  # Restart the container automatically in case of failure
