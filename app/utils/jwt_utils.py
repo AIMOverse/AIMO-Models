@@ -1,7 +1,10 @@
-import os
 import datetime
+import os
+
 import jwt  # 确保这里导入了PyJWT
+
 from app.exceptions.jwt_exceptions import JWTException
+
 
 class JWTUtils:
     """JWT Utility for token generation and validation"""
@@ -26,5 +29,5 @@ class JWTUtils:
             return decoded
         except jwt.ExpiredSignatureError:
             raise JWTException("Token expired")
-        except Exception:
+        except jwt.InvalidTokenError:
             raise JWTException("Invalid token")
