@@ -1,7 +1,12 @@
 from typing import Generator
 
+import os
 import pytest
 from starlette.testclient import TestClient
+
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["SECRET_KEY"] = "test_secret_key_for_testing_purposes_only"
+os.environ["ADMIN_API_KEY"] = "test_admin_api_key"
 
 from app.core.config import settings
 from app.main import app

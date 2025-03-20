@@ -23,10 +23,12 @@ sse-starlette~=2.2.1
 # Testing Libraries
 pytest~=8.3.4
 pytest-cov~=6.0.0
+pytest-dotenv~=0.5.2
 
 # Network Libraries
 aiohttp~=3.11.11
 httpx~=0.28.1
+redis~=5.2.1
 
 # environment variables
 python-dotenv~=1.0.1

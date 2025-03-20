@@ -9,6 +9,8 @@ from app.core.config import settings
 from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
 from app.middleware.jwt_middleware import JWTMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.utils.jwt_utils import JWTUtils
 
 """
 Author: Jack Pan
@@ -54,6 +56,12 @@ app.add_middleware(JWTMiddleware,
                    base_url=settings.BASE_URL,
                    excluded_paths=settings.AUTH_EXCLUDE_PATHS)
 
+# Add Rate Limit Middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    jwt_utils=JWTUtils(),
+    excluded_paths=["/docs", "/redoc", "/openapi.json", "/api/v1/auth/login"]
+)
 
 # Register the exception handlers
 register_exception_handlers(app)
