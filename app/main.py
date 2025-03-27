@@ -54,6 +54,9 @@ app.add_middleware(JWTMiddleware,
                    base_url=settings.BASE_URL,
                    excluded_paths=settings.AUTH_EXCLUDE_PATHS)
 
+# Add Chat Limit Middleware
+app.add_middleware(ChatLimitMiddleware,
+                   base_url=settings.BASE_URL)
 
 # Register the exception handlers
 register_exception_handlers(app)

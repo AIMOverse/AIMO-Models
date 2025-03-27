@@ -17,7 +17,7 @@ def client() -> Generator:
 
 @pytest.fixture(scope='module')
 def get_invitation_code(client: TestClient) -> str:
-    """Test generate invitation code"""
+    """Test generating an invitation code"""
     response = client.post(
         url=f"{settings.BASE_URL}/invitation-code/generate-invitation-code",
         headers={"Content-Type": "application/json",
@@ -25,17 +25,17 @@ def get_invitation_code(client: TestClient) -> str:
     )
     assert response.status_code == 200
     result = response.json()
-    # Only verify emotions field exists and is a list
+    # Verify that the invitation_code field exists
     assert "invitation_code" in result
     return result["invitation_code"]
 
 
-# Test check invitation code
+# Test checking the invitation code
 @pytest.fixture(scope='module')
 def get_access_token(client: TestClient, get_invitation_code) -> str:
     if access_token is not None and access_token != "":
         return access_token
-    """Test check invitation code"""
+    """Test checking the invitation code"""
     response = client.post(
         url=f"{settings.BASE_URL}/auth/check-invitation-code",
         headers={"Content-Type": "application/json"},
@@ -43,6 +43,6 @@ def get_access_token(client: TestClient, get_invitation_code) -> str:
     )
     assert response.status_code == 200
     result = response.json()
-    # Only verify emotions field exists and is a list
+    # Verify that the access_token field exists
     assert "access_token" in result
     return result["access_token"]

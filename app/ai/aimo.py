@@ -54,11 +54,11 @@ class AIMO:
     def __init__(self):
         """Initialize AIMO instance"""
         # API configuration
-        self.api_key = settings.NEBULA_API_KEY
+        self.api_key = settings.REDPILL_API_KEY
         if not self.api_key:
-            raise ValueError("API Key not found, please set the environment variable NEBULA_API_KEY")
+            raise ValueError("API Key not found, please set the environment variable REDPILL_API_KEY")
         # LLM API endpoint
-        self.url = "https://inference.nebulablock.com/v1/chat/completions"
+        self.url = "https://https://api.red-pill.ai/v1/chat/completions"
         # API headers
         self.headers = {
             "Content-Type": "application/json",
