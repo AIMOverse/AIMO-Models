@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
 from app.middleware.jwt_middleware import JWTMiddleware
+from app.middleware.chat_limit_middleware import ChatLimitMiddleware
 
 """
 Author: Jack Pan

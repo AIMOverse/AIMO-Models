@@ -23,7 +23,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Set environment variables
-ENV NEBULA_API_KEY=${NEBULA_API_KEY}
+ENV REDPILL_API_KEY=${NEBULA_API_KEY}
 ENV SECRET_KEY=${SECRET_KEY}
 ENV ADMIN_API_KEY=${ADMIN_API_KEY}
 ENV DATABASE_URL=${DATABASE_URL}
