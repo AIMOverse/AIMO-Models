@@ -8,12 +8,12 @@ class UserBasic(BaseModel):
     """User persona data"""
     survey_responses: Dict[str, Any]
     username: str = Field(..., description="Username")
+    timestamp: Optional[str] = Field(None, description="Submission timestamp")
 
 class Demographics(BaseModel):
     """Demographics information (gender and age)"""
     gender: str = Field(..., description="User gender")
     age_range: str = Field(..., description="User age range")
-    timestamp: Optional[str] = Field(None, description="Submission timestamp")
 
 
 class HabitsPermissions(BaseModel):
@@ -42,12 +42,12 @@ class StressLevel(BaseModel):
 
 class SurveyRequest(BaseModel):
     """User survey request model"""
+    username: str = Field(None, description="Username")
     demographics: Demographics
     habits_permissions: HabitsPermissions
     emotional_state: EmotionalState
     personality_assessment: MBTIPersonality
     stress_assessment: StressLevel
-    username: Optional[str] = Field(None, description="Username")
 
 
 class SurveyResponse(BaseModel):
