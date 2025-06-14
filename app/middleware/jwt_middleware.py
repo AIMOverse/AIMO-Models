@@ -22,6 +22,11 @@ class JWTMiddleware(BaseHTTPMiddleware):
             # Proceed to the next middleware or route handler if the path is excluded
             response = await call_next(request)
             return response
+            
+        # Allow OPTIONS requests to pass through without authentication (for CORS preflight)
+        if request.method == "OPTIONS":
+            response = await call_next(request)
+            return response
 
         # Retrieve the Authorization header from the request
         authorization: str = request.headers.get('Authorization')
