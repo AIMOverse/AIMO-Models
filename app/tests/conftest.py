@@ -1,7 +1,9 @@
-from typing import Generator
-
+import os
 import pytest
+from typing import Generator
 from starlette.testclient import TestClient
+
+os.environ["TESTING"] = "True"
 
 from app.core.config import settings
 from app.main import app
