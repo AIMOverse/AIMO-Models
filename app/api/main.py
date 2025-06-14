@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import chat, emo, auth, invitation_code
+from app.api.routes import chat, emo, auth, invitation_code, user_survey
 
 """
 Author: Jack Pan, Wesley Xu
@@ -16,3 +16,5 @@ api_router.include_router(emo.router, prefix="/emotion", tags=["emotion"])  # Em
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])  # Authentication router
 api_router.include_router(invitation_code.router, prefix="/invitation-code",
                           tags=["invitation_code"])  # Invitation code router
+api_router.include_router(user_survey.router, prefix="/survey",
+                          tags=["survey"])  # User survey router

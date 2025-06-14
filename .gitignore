@@ -317,3 +317,7 @@ app/ai/static/models/EmotionModule/*
 # keep static folder
 static/*
 !static/.keep
+
+# docker files
+docker-compose.yml
+Dockerfile
