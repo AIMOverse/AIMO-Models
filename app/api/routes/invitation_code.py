@@ -60,9 +60,10 @@ async def get_available_invitation_codes(api_key: str = Header(...)) -> GetAvail
     # Check if the API key is valid
     if api_key != settings.ADMIN_API_KEY:
         raise AuthException(status_code=401, message="Invalid APIKEY")
+    # Get all the existing invitation codes
     with Session(engine) as session:
-        statement = select(InvitationCode).where(InvitationCode.used == False
-                                                 and InvitationCode.expiration_time > datetime.datetime.now())  # Get all the existing invitation codes
+        statement = select(InvitationCode).where(not InvitationCode.used
+                                                 and InvitationCode.expiration_time > datetime.datetime.now())
         available_invitation_codes = session.exec(statement).all()
 
     return GetAvailableInvitationCodesResponse(invitation_codes=[code.code for code in available_invitation_codes])
