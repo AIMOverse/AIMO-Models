@@ -70,3 +70,4 @@ class JWTUtils:
             return updated_token, decoded['chat_count']
         except Exception as e:
             raise JWTException(f"Failed to update token: {str(e)}")
+        

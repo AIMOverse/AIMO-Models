@@ -2,6 +2,9 @@ import os
 import pytest
 from typing import Generator
 from starlette.testclient import TestClient
+import jwt
+
+from app.utils.jwt_utils import JWTUtils, JWTException
 
 os.environ["TESTING"] = "True"
 
@@ -48,3 +51,22 @@ def get_access_token(client: TestClient, get_invitation_code) -> str:
     # Verify that the access_token field exists
     assert "access_token" in result
     return result["access_token"]
+
+def test_decode_token_expired(monkeypatch):
+    jwt_utils = JWTUtils()
+    expired_token = jwt.encode({'exp': 0}, jwt_utils.secret_key, algorithm=jwt_utils.algorithm)
+    with pytest.raises(JWTException, match="Token expired"):
+        jwt_utils.decode_token(expired_token)
+
+def test_decode_token_invalid():
+    jwt_utils = JWTUtils()
+    invalid_token = "invalid.token.string"
+    with pytest.raises(JWTException, match="Invalid token"):
+        jwt_utils.decode_token(invalid_token)
+
+def test_increment_chat_count_limit():
+    jwt_utils = JWTUtils()
+    payload = {'chat_count': jwt_utils.max_chat_count, 'max_chat_count': jwt_utils.max_chat_count}
+    token = jwt.encode(payload, jwt_utils.secret_key, algorithm=jwt_utils.algorithm)
+    with pytest.raises(JWTException, match="Token chat limit exceeded"):
+        jwt_utils.increment_chat_count(token)
