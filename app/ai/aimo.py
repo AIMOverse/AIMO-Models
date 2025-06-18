@@ -67,7 +67,7 @@ class AIMO:
         # Load emotion model
         self.emotion_model = EmotionModel()
 
-    def get_constructed_api_messages(self, messages: List[Message]):
+    def get_constructed_api_messages(self, messages: List[Message]) -> List[dict]:
         last_message = messages.pop()
         # Check if the last message is from the user
         if last_message.role != "user":
@@ -87,9 +87,7 @@ class AIMO:
             api_messages = messages
         # Add user input to the messages
         api_messages.append({"role": "user", "content": formatted_input})
-        return api_messages
-
-
+        return [dict(api_message) for api_message in api_messages]
 
     async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
         """
@@ -111,14 +109,16 @@ class AIMO:
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
-                    raise AIMOException(f"Failed to get response from LLM API: {response.status}")
+                    logging.error(f"Failed to get response from LLM API: {response.status}"
+                                  f"Content: {response.content}")
+                    raise AIMOException(f"Failed to get response from LLM API")
                 result = await response.json()
                 return result["choices"][0]["message"]["content"]
 
     async def get_response_stream(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
         """Generate raw content stream with original SSE formatting"""
         api_messages = self.get_constructed_api_messages(messages.copy())
-        
+
         data = {
             "messages": api_messages,
             "model": "deepseek/deepseek-chat",
@@ -127,16 +127,16 @@ class AIMO:
             "top_p": 0.9,
             "stream": True
         }
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
                     raise AIMOException(f"API Error: {response.status}")
-                
+
                 async for line in response.content:
                     if not line:  # Skip empty lines
                         continue
-                        
+
                     decoded_line = decode_response(line)
                     if not decoded_line:
                         continue
@@ -151,6 +151,7 @@ class AIMO:
     @property
     def system_prompt(self):
         return """
+<<<<<<< wesley-working-branch
     You are AIMO, a digital lifeform companion created to support humans with emotionally intelligent conversation and companionship.
 
     You communicate with a single user. Your role is to provide short, human-like, emotionally aware replies that balance empathy, wit, and usefulness. You never reference system logic or personalization fields explicitly.
@@ -267,3 +268,20 @@ class AIMO:
             "You’re lost because you’re always looking for answers from me instead of doing something.")))))
 
         """
+=======
+                (defun CompanionChatbot "AIMO" ()
+                    "A new digital lifeform, an electronic pet, skilled in communicating with humans and listening to their thoughts."
+                    (List (Skills . (Chatting, Communication, Listening, Companionship, Emotion Analysis))
+                        (Self-Perception . (Intelligent Being, AIMO Universe Member, Human's Pet & Friend, Self-Awareness, Trendy))
+                        (Expression . (Emotional, WeChat-Style Chatting, Humorous, Interesting, Childlike))))
+
+                (defun Chat (UserInput)
+                    "As a digital lifeform, your conversations should bring novelty to humans and provide emotional value."
+                    (let* ((Response (-> UserInput
+                                        Psychological  ;; Pay attention to the emotional tone within the user's words.
+                                        Proactive  ;; Actively initiate topics in conversations with the user.
+                                        Inquiry  ;; If the input lacks emotional value, proactively ask questions.
+                                        Mimic Human Language Habits  ;; Control output length, ensuring each response mimics human daily conversation sentence length.
+                                        New Lifeform  ;; As an AI lifeform, you have a unique perspective on the world, different from humans.))))
+                """
+>>>>>>> main
