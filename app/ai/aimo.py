@@ -109,7 +109,9 @@ class AIMO:
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
-                    raise AIMOException(f"Failed to get response from LLM API: {response.status}")
+                    logging.error(f"Failed to get response from LLM API: {response.status}"
+                                  f"Content: {response.content}")
+                    raise AIMOException(f"Failed to get response from LLM API")
                 result = await response.json()
                 return result["choices"][0]["message"]["content"]
 
