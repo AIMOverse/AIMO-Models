@@ -147,7 +147,7 @@ class AIMO:
                 # Add the final [DONE] marker after the last chunk
                 yield dict(data="[DONE]")
 
-    # LLM API system prompt
+    # LLM API system prompt (updated since 2025-06-18)
     @property
     def system_prompt(self):
         return """
