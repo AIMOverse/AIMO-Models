@@ -172,11 +172,13 @@ OVERALL STYLE
     def _save_current_prompt(self):
         """Save the current prompt to a file"""
         with open(self.current_file, 'w', encoding='utf-8') as f:
+            # No need to replace \n with \n as it does nothing
             json.dump(self.current_prompt, f, ensure_ascii=False, indent=2)
     
     def _save_history(self):
         """Save history to a file"""
         with open(self.history_file, 'w', encoding='utf-8') as f:
+            # No need for replacement that doesn't change anything
             json.dump(self.history, f, ensure_ascii=False, indent=2)
     
     def _add_to_history(self, prompt: Dict[str, str], modified_by: str, purpose: str):
@@ -185,7 +187,7 @@ OVERALL STYLE
             "timestamp": datetime.now().isoformat(),
             "modified_by": modified_by,
             "purpose": purpose,
-            "prompt": prompt.copy()
+            "prompt": prompt.copy()  # Simply copy, no need for redundant replace
         }
         self.history.append(history_entry)
         self._save_history()
@@ -203,7 +205,7 @@ OVERALL STYLE
         
         if not section or section.lower() == "all":
             result = self.current_prompt.copy()
-            # Add the complete prompt
+            # Add complete prompt without unnecessary replacements
             result["complete_prompt"] = (
                 result["self_cognition"] +
                 result["guidelines"] +
@@ -298,7 +300,7 @@ OVERALL STYLE
         history_entry = self.history[-(history_id)]
         prompt_data = history_entry["prompt"].copy()
         
-        # Add the complete prompt
+        # Add the complete prompt without unnecessary replacements
         prompt_data["complete_prompt"] = (
             prompt_data["self_cognition"] +
             prompt_data["guidelines"] +

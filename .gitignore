@@ -321,3 +321,6 @@ static/*
 # docker files
 docker-compose.yml
 Dockerfile
+
+# Prompt Data
+data/prompts/*
