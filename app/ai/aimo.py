@@ -67,7 +67,7 @@ class AIMO:
         # Load emotion model
         self.emotion_model = EmotionModel()
 
-    def get_constructed_api_messages(self, messages: List[Message]):
+    def get_constructed_api_messages(self, messages: List[Message]) -> List[dict]:
         last_message = messages.pop()
         # Check if the last message is from the user
         if last_message.role != "user":
@@ -87,9 +87,7 @@ class AIMO:
             api_messages = messages
         # Add user input to the messages
         api_messages.append({"role": "user", "content": formatted_input})
-        return api_messages
-
-
+        return [dict(api_message) for api_message in api_messages]
 
     async def get_response(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
         """
@@ -118,7 +116,7 @@ class AIMO:
     async def get_response_stream(self, messages: List[Message], temperature: float = 1.32, max_new_tokens: int = 500):
         """Generate raw content stream with original SSE formatting"""
         api_messages = self.get_constructed_api_messages(messages.copy())
-        
+
         data = {
             "messages": api_messages,
             "model": "meta-llama/Llama-3.3-70B-Instruct",
@@ -127,16 +125,16 @@ class AIMO:
             "top_p": 0.9,
             "stream": True
         }
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 if response.status != 200:
                     raise AIMOException(f"API Error: {response.status}")
-                
+
                 async for line in response.content:
                     if not line:  # Skip empty lines
                         continue
-                        
+
                     decoded_line = decode_response(line)
                     if not decoded_line:
                         continue
