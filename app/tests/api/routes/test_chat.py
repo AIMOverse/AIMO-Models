@@ -116,7 +116,7 @@ def test_sse_chat(client: TestClient, get_access_token) -> None:
             if "role" in delta and delta["role"] == "assistant":
                 received_role = True
                 logging.info("Received role event")
-            elif "content" in delta and delta["content"].strip():
+            if "content" in delta and delta["content"]:
                 received_content = True
                 logging.info(f"Received content: {delta['content']}")
 
