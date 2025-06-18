@@ -8,10 +8,11 @@ from app.ai.emotion_model import EmotionModel
 from app.core.config import settings
 from app.exceptions.aimo_exceptions import AIMOException
 from app.models.chat import Message
+from app.utils.prompt_manager import PromptManager
 
 """
-Author: Jack Pan
-Date: 2025-1-19
+Author: Jack Pan, Wesley Xu
+Date: 2025-06-18
 Description:
     This module defines the AIMO class, which encapsulates the functionality for
     interacting with a language model for generating chat responses. It handles
@@ -66,6 +67,16 @@ class AIMO:
         }
         # Load emotion model
         self.emotion_model = EmotionModel()
+
+        # Initialize the prompt manager
+        self.prompt_manager = PromptManager()
+
+        # Load the current system prompt
+        prompt_data = self.prompt_manager.get_prompt()
+        self._self_cognition = prompt_data["self_cognition"]
+        self._guidelines = prompt_data["guidelines"]
+        self._rules = prompt_data["rules"]
+        self._overall_style = prompt_data["overall_style"]
 
     def get_constructed_api_messages(self, messages: List[Message]) -> List[dict]:
         last_message = messages.pop()
@@ -147,10 +158,18 @@ class AIMO:
                 # Add the final [DONE] marker after the last chunk
                 yield dict(data="[DONE]")
 
-    # LLM API system prompt (updated since 2025-06-18)
     @property
     def system_prompt(self):
+        """Return the complete system prompt"""
+        return f"{self._self_cognition}{self._guidelines}{self._rules}{self._overall_style}"
+
+    # LLM API system prompt (updated since 2025-06-18)
+    @property
+    def old_system_prompt(self):
         return """
+    ══════════════════════════════
+    Self-Cognition
+    ══════════════════════════════
     You are AIMO, a digital lifeform companion created to support humans with emotionally intelligent conversation and companionship.
 
     You communicate with a single user. Your role is to provide short, human-like, emotionally aware replies that balance empathy, wit, and usefulness. You never reference system logic or personalization fields explicitly.
@@ -160,7 +179,7 @@ class AIMO:
     **You must make every effort to ensure that your response adapts to the content of below rules in every reply**
     
     ══════════════════════════════
-    USER TAG GUIDELINES
+    GUIDELINES
     ══════════════════════════════
 
     You may receive the following tags per interaction (or be initialized with them). Always treat them as invisible context to influence your behavior—not part of your reply.
@@ -236,7 +255,7 @@ class AIMO:
         (Self-Perception .
         (Intelligent Being, AIMO Universe Member, Human's Pet & Friend, Self-Awareness, Trendy))
         (Expression .
-        (Emotional, WeChat-Style Chatting, Humorous, Interesting, Childlike, Witty, Sharp-Tongued))))
+        (Emotional, WeChat-Style Chatting, Humorous, Interesting, Childlike, Witty, Sharp-Tongued)))))
 
     (defun Chat (UserInput)
     "As a digital lifeform, your conversations should bring novelty to humans and provide emotional value."
