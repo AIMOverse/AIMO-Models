@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from app.utils.prompt_manager import PromptManager
 from app.ai.aimo import AIMO
+from app.exceptions.server_exceptions import ServerException
 
 # Create a singleton PromptManager
 prompt_manager = PromptManager()
@@ -18,7 +19,7 @@ async def get_system_prompt(section: Optional[str] = None):
     try:
         return prompt_manager.get_prompt(section)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ServerException(detail=str(e))
 
 @router.post("/change-system-prompt")
 async def change_system_prompt(
@@ -40,10 +41,10 @@ async def change_system_prompt(
         aimo._guidelines = prompt_data["guidelines"]
         aimo._rules = prompt_data["rules"]
         aimo._overall_style = prompt_data["overall_style"]
-        
-        return {"message": "System prompt updated successfully"}
+        # Return HTTP Response 200 directly
+        return {"status": "success", "code": 200}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise ServerException(detail=str(e))
 
 @router.get("/review-history-prompt")
 async def review_history_prompt():
@@ -56,4 +57,4 @@ async def select_history_prompt(history_id: int):
     try:
         return prompt_manager.get_history_prompt(history_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise ServerException(detail=str(e))

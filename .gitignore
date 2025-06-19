@@ -318,9 +318,8 @@ app/ai/static/models/EmotionModule/*
 static/*
 !static/.keep
 
-# docker files
-docker-compose.yml
-Dockerfile
-
 # Prompt Data
 data/prompts/*
+
+# Database files
+.db

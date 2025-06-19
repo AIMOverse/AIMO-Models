@@ -49,13 +49,12 @@ class ChatLimitMiddleware(BaseHTTPMiddleware):
 
         try:
             # Increment conversation count and get the updated token
-            updated_token, current_count = self.jwt_utils.increment_chat_count(token)
+            current_count = self.jwt_utils.increment_chat_count(token)
             
             # Process the request
             response = await call_next(request)
             
             # Add the updated token to the response headers
-            response.headers["X-Updated-Token"] = updated_token
             response.headers["X-Chat-Count"] = str(current_count)
             
             return response
