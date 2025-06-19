@@ -10,6 +10,7 @@ from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
 from app.middleware.jwt_middleware import JWTMiddleware
 from app.middleware.chat_limit_middleware import ChatLimitMiddleware
+from app.api.routes.system_prompt import router as system_prompt_router
 
 """
 Author: Jack Pan
@@ -64,7 +65,6 @@ register_exception_handlers(app)
 
 # Include the API router with a prefix
 app.include_router(api_router, prefix=settings.BASE_URL)
-
 
 # Import the database initialization function
 @app.on_event("startup")

@@ -1,5 +1,6 @@
 from typing import Optional, Dict
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 
 from app.utils.prompt_manager import PromptManager
 from app.ai.aimo import AIMO
@@ -13,6 +14,12 @@ router = APIRouter(
     tags=["system-prompt"],
 )
 
+class SystemPromptUpdate(BaseModel):
+    section: str
+    content: str
+    modified_by: Optional[str] = "Admin"
+    purpose: str = "Update system prompt"
+
 @router.get("/get-system-prompt")
 async def get_system_prompt(section: Optional[str] = None):
     """Retrieve the current system prompt"""
@@ -22,16 +29,16 @@ async def get_system_prompt(section: Optional[str] = None):
         raise ServerException(detail=str(e))
 
 @router.post("/change-system-prompt")
-async def change_system_prompt(
-    section: str,
-    content: str,
-    modified_by: Optional[str] = "Admin",
-    purpose: str = "Update system prompt"
-):
+async def change_system_prompt(update_data: SystemPromptUpdate):
     """Change the system prompt and record its history"""
     try:
         # Update the prompt
-        prompt_manager.update_prompt(section, content, modified_by, purpose)
+        prompt_manager.update_prompt(
+            update_data.section, 
+            update_data.content, 
+            update_data.modified_by, 
+            update_data.purpose
+        )
         
         # Update the system prompt in the AIMO instance (in practice, this requires a way to update all active AIMO instances)
         # Here we assume AIMO is a singleton or there is a way to get the current active instance

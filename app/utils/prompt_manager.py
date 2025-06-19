@@ -236,25 +236,24 @@ OVERALL STYLE
         new_prompt = self.current_prompt.copy()
         
         # Update the prompt based on the section
-        if section.lower() == "self-cognition":
+        section_lower = section.lower()
+        if section_lower == "self-cognition" or section_lower == "self_cognition":
             new_prompt["self_cognition"] = content
-        elif section.lower() == "guidelines":
+        elif section_lower == "guidelines":
             new_prompt["guidelines"] = content
-        elif section.lower() == "rules":
+        elif section_lower == "rules":
             new_prompt["rules"] = content
-        elif section.lower() == "overall style":
+        elif section_lower == "overall style" or section_lower == "overall_style":
             new_prompt["overall_style"] = content
-        elif section.lower() == "all":
+        elif section_lower == "all":
             # Parse the complete prompt
             if "Self-Cognition" in content and "GUIDELINES" in content:
                 parts = content.split("══════════════════════════════")
                 if len(parts) >= 9:  # Should have enough parts to split sections
-                    new_prompt["self_cognition"] = "══════════════════════════════" + parts[1] + "══════════════════════════════"
-                    new_prompt["guidelines"] = "══════════════════════════════" + parts[3] + "══════════════════════════════"
-                    new_prompt["rules"] = "══════════════════════════════" + parts[5] + "══════════════════════════════"
-                    new_prompt["overall_style"] = "══════════════════════════════" + parts[7] + "══════════════════════════════"
-            else:
-                raise ValueError("Invalid complete prompt format")
+                    new_prompt["self_cognition"] = parts[0] + "══════════════════════════════" + parts[1] + "══════════════════════════════" + parts[2]
+                    new_prompt["guidelines"] = parts[2] + "══════════════════════════════" + parts[3] + "══════════════════════════════" + parts[4]
+                    new_prompt["rules"] = parts[4] + "══════════════════════════════" + parts[5] + "══════════════════════════════" + parts[6]
+                    new_prompt["overall_style"] = parts[6] + "══════════════════════════════" + parts[7] + "══════════════════════════════" + parts[8]
         else:
             raise ValueError(f"Invalid section: {section}")
         
@@ -273,11 +272,10 @@ OVERALL STYLE
         Returns:
             List of history entries, sorted in reverse chronological order
         """
-        # Create a simplified version of the history containing only metadata
         history_summary = []
         for i, entry in enumerate(reversed(self.history)):
             history_summary.append({
-                "id": i + 1,  # Start numbering from 1
+                "id": len(self.history) - i,
                 "timestamp": entry["timestamp"],
                 "modified_by": entry["modified_by"],
                 "purpose": entry["purpose"]
