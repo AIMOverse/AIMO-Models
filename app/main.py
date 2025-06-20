@@ -1,15 +1,15 @@
 import logging
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
 from app.api.main import api_router
 from app.core.config import settings
 from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
-from app.middleware.jwt_middleware import JWTMiddleware
 from app.middleware.chat_limit_middleware import ChatLimitMiddleware
+from app.middleware.jwt_middleware import JWTMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.system_prompt import router as system_prompt_router
 
 """
