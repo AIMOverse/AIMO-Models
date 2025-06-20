@@ -345,7 +345,7 @@ OVERALL STYLE
         required_sections = ["self_cognition", "guidelines", "rules", "overall_style"]
         for section in required_sections:
             if section not in prompt_data:
-                raise ValueError(f"Missing required section: {section}")
+                raise ValueError("All sections must be provided")
         
         # 创建新的提示副本
         new_prompt = self.current_prompt.copy()
@@ -388,8 +388,10 @@ OVERALL STYLE
         Returns:
             Content of the historical prompt
         """
-        if history_id < 1 or history_id > len(self.history):
+        if history_id < 1:
             raise ValueError(f"Invalid history ID: {history_id}")
+        if history_id > len(self.history):
+            raise ValueError("History entry not found")
         
         # Retrieve the specified history entry (note that ID starts from 1, but index starts from 0)
         history_entry = self.history[-(history_id)]

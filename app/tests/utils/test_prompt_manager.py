@@ -201,5 +201,53 @@ def test_update_all_sections(prompt_manager, mock_redis):
     updated_prompt = prompt_manager.get_prompt()
     for section, content in new_prompt.items():
         assert updated_prompt[section] == content
+
+def test_update_all_sections_invalid_input(prompt_manager):
+    """Test updating all sections with invalid input"""
+    # Prepare invalid prompt content (missing a section)
+    new_prompt = {
+        "self_cognition": "New self cognition",
+        "guidelines": "New guidelines",
+        # Missing 'rules' and 'overall_style'
+    }
     
-    # Verify Redis set method was called
+    # Execute update and expect it to raise ValueError
+    with pytest.raises(ValueError, match="All sections must be provided"):
+        prompt_manager.update_all_sections(new_prompt, "Test User", "Invalid update")
+
+def test_get_history_prompt_invalid_id(prompt_manager):
+    """Test retrieving a history prompt with an invalid ID"""
+    # Execute get_history_prompt with an invalid ID
+    with pytest.raises(ValueError, match="Invalid history ID"):
+        prompt_manager.get_history_prompt(-1)
+    
+    # Also test with a non-existent ID
+    with pytest.raises(ValueError, match="History entry not found"):
+        prompt_manager.get_history_prompt(9999)
+
+def test_get_history_prompt_valid_id(prompt_manager, mock_redis):
+    """Test retrieving a valid history prompt"""
+    # Prepare mock history data
+    history_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "modified_by": "System",
+        "purpose": "Initial system prompt",
+        "prompt": {
+            "self_cognition": "Historical self cognition",
+            "guidelines": "Historical guidelines",
+            "rules": "Historical rules",
+            "overall_style": "Historical overall style"
+        }
+    }
+    
+    # Set the history directly in the prompt_manager
+    prompt_manager.history = [history_entry]
+    
+    # Get history prompt by ID
+    history_prompt = prompt_manager.get_history_prompt(1)
+    
+    # Verify the retrieved prompt matches the historical data
+    assert history_prompt["self_cognition"] == "Historical self cognition"
+    assert history_prompt["guidelines"] == "Historical guidelines"
+    assert history_prompt["rules"] == "Historical rules"
+    assert history_prompt["overall_style"] == "Historical overall style"
