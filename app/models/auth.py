@@ -29,3 +29,26 @@ class GenerateInvitationCodeResponse(BaseModel):
 class GetAvailableInvitationCodesResponse(BaseModel):
     """Response format for getting available invitation codes"""
     invitation_codes: List[str] = Field(..., description="The available invitation codes")
+
+
+class WalletVerifyRequest(BaseModel):
+    """Request format for verifying a wallet"""
+    wallet_address: str
+    auth_token: str  # Privy authentication token
+
+
+class WalletVerifyResponse(BaseModel):
+    """Response format for verifying a wallet"""
+    access_token: str
+    is_new_user: bool  # Indicates whether the user needs to bind an invitation code
+
+
+class BindInvitationCodeRequest(BaseModel):
+    """Request format for binding an invitation code"""
+    invitation_code: str
+
+
+class BindInvitationCodeResponse(BaseModel):
+    """Response format for binding an invitation code"""
+    success: bool
+    message: str
