@@ -1,10 +1,11 @@
-from typing import Optional, Dict
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from typing import Optional
+from fastapi import APIRouter
 
 from app.utils.prompt_manager import PromptManager
 from app.ai.aimo import AIMO
 from app.exceptions.server_exceptions import ServerException
+
+from app.models.system_prompt import SystemPromptUpdate
 
 # Create a singleton PromptManager
 prompt_manager = PromptManager()
@@ -13,12 +14,6 @@ router = APIRouter(
     prefix="",
     tags=["system-prompt"],
 )
-
-class SystemPromptUpdate(BaseModel):
-    section: str
-    content: str
-    modified_by: Optional[str] = "Admin"
-    purpose: str = "Update system prompt"
 
 @router.get("/get-system-prompt")
 async def get_system_prompt(section: Optional[str] = None):
