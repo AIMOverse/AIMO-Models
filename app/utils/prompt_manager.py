@@ -331,33 +331,33 @@ OVERALL STYLE
         return True
     
     def update_all_sections(self, prompt_data: Dict[str, str], modified_by: str, purpose: str) -> bool:
-        """一次更新所有提示部分
+        """Update all prompt sections at once
         
         Args:
-            prompt_data: 包含所有部分的新提示数据
-            modified_by: 修改者
-            purpose: 修改目的
+            prompt_data: New prompt data containing all sections
+            modified_by: Modifier name
+            purpose: Purpose of the modification
             
         Returns:
-            更新是否成功
+            Whether the update was successful
         """
-        # 验证提供的所有部分是否有效
+        # Validate that all required sections are provided
         required_sections = ["self_cognition", "guidelines", "rules", "overall_style"]
         for section in required_sections:
             if section not in prompt_data:
                 raise ValueError("All sections must be provided")
         
-        # 创建新的提示副本
+        # Create a copy of the current prompt
         new_prompt = self.current_prompt.copy()
         
-        # 更新所有部分
+        # Update all sections
         for section in required_sections:
             new_prompt[section] = prompt_data[section]
         
-        # 添加到历史记录
+        # Add to history
         self._add_to_history(new_prompt, modified_by, purpose)
         
-        # 更新当前提示
+        # Update the current prompt
         self.current_prompt = new_prompt
         self._save_current_prompt()
         

@@ -251,3 +251,125 @@ def test_get_history_prompt_valid_id(prompt_manager, mock_redis):
     assert history_prompt["guidelines"] == "Historical guidelines"
     assert history_prompt["rules"] == "Historical rules"
     assert history_prompt["overall_style"] == "Historical overall style"
+
+def test_load_or_initialize_new_prompt(mock_redis):
+    """Test initializing when no prompt exists in Redis"""
+    # Set Redis to indicate that the current prompt doesn't exist
+    mock_redis.exists.return_value = False
+    
+    # Initialize PromptManager
+    os.environ["TESTING"] = "True"
+    manager = PromptManager(redis_client=mock_redis)
+    
+    # Verify that Redis exists method was called
+    mock_redis.exists.assert_called_with("current_prompt")
+    
+    # Verify that a default prompt was created
+    assert "self_cognition" in manager.current_prompt
+    assert "guidelines" in manager.current_prompt
+    assert "rules" in manager.current_prompt
+    assert "overall_style" in manager.current_prompt
+    
+    # Verify that _save_current_prompt was called to save the default prompt to Redis
+    mock_redis.set.assert_called_once()
+    
+    # Clean up environment variable
+    os.environ.pop("TESTING", None)
+
+def test_load_or_initialize_existing_prompt():
+    """Test loading existing prompt from Redis"""
+    # Prepare mock existing prompt data
+    existing_prompt = {
+        "self_cognition": "Existing self cognition",
+        "guidelines": "Existing guidelines",
+        "rules": "Existing rules",
+        "overall_style": "Existing overall style"
+    }
+    
+    # Use patch to directly mock Redis methods
+    with patch('redis.Redis') as mock_redis_class:
+        # Set up mock instance
+        mock_redis = MagicMock()
+        mock_redis_class.return_value = mock_redis
+        
+        # Set Redis to return existing prompt as valid JSON
+        mock_redis.exists.return_value = True
+        mock_redis.get.return_value = json.dumps(existing_prompt)
+        mock_redis.llen.return_value = 0
+        
+        # Initialize PromptManager
+        os.environ["TESTING"] = "False"  # Use the actual Redis connection flow
+        manager = PromptManager()
+        
+        # Verify that the loaded prompt matches the expected one
+        assert manager.current_prompt["self_cognition"] == "Existing self cognition"
+        assert manager.current_prompt["guidelines"] == "Existing guidelines"
+        assert manager.current_prompt["rules"] == "Existing rules"
+        assert manager.current_prompt["overall_style"] == "Existing overall style"
+        
+        # Verify that Redis methods were called
+        mock_redis.exists.assert_called()
+        mock_redis.get.assert_called()
+        
+        # Clean up environment variable
+        os.environ.pop("TESTING", None)
+
+def test_load_or_initialize_invalid_json():
+    """Test loading with invalid JSON in Redis"""
+    # Use patch to directly mock Redis methods
+    with patch('redis.Redis') as mock_redis_class:
+        # Set up mock instance
+        mock_redis = MagicMock()
+        mock_redis_class.return_value = mock_redis
+        
+        # Set Redis to return invalid JSON for current prompt
+        mock_redis.exists.return_value = True
+        mock_redis.get.return_value = "invalid json data"
+        mock_redis.llen.return_value = 0
+        
+        # Initialize PromptManager
+        os.environ["TESTING"] = "False"  # Use the actual Redis connection flow
+        manager = PromptManager()
+        
+        # Verify that a default prompt was created (because JSON parsing failed)
+        assert "self_cognition" in manager.current_prompt
+        assert "guidelines" in manager.current_prompt
+        assert "rules" in manager.current_prompt
+        assert "overall_style" in manager.current_prompt
+        
+        # Verify that Redis methods were called
+        mock_redis.exists.assert_called()
+        mock_redis.get.assert_called()
+        
+        # Clean up environment variable
+        os.environ.pop("TESTING", None)
+
+def test_load_or_initialize_none_value():
+    """Test loading when Redis returns None"""
+    # Use patch to directly mock Redis methods
+    with patch('redis.Redis') as mock_redis_class:
+        # Set up mock instance
+        mock_redis = MagicMock()
+        mock_redis_class.return_value = mock_redis
+        
+        # Set Redis to return None for current prompt
+        mock_redis.exists.return_value = True
+        mock_redis.get.return_value = None
+        mock_redis.llen.return_value = 0
+        
+        # Initialize PromptManager
+        os.environ["TESTING"] = "False"  # Use the actual Redis connection flow
+        manager = PromptManager()
+        
+        # Verify that a default prompt was created (because Redis returned None)
+        assert "self_cognition" in manager.current_prompt
+        assert "guidelines" in manager.current_prompt
+        assert "rules" in manager.current_prompt
+        assert "overall_style" in manager.current_prompt
+        
+        # Verify that Redis methods were called
+        mock_redis.exists.assert_called()
+        mock_redis.get.assert_called()
+        
+        # Clean up environment variable
+        os.environ.pop("TESTING", None)
