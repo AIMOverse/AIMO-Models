@@ -7,9 +7,10 @@ from app.api.main import api_router
 from app.core.config import settings
 from app.core.db import create_db_and_tables
 from app.exception_handler.exception_handler import register_exception_handlers
-# from app.middleware.chat_limit_middleware import ChatLimitMiddleware
 from app.middleware.jwt_middleware import JWTMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi import Request
 from app.api.routes.system_prompt import router as system_prompt_router
 
 """
@@ -51,14 +52,22 @@ app.add_middleware(
     allow_headers=["*"]  # Allow all headers
 )
 
+@app.middleware("http")
+async def allow_options_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Max-Age": "3600"
+        }
+        return JSONResponse(content={}, status_code=200, headers=headers)
+    return await call_next(request)
+
 # Add Auth Middleware
 app.add_middleware(JWTMiddleware,
                    base_url=settings.BASE_URL,
                    excluded_paths=settings.AUTH_EXCLUDE_PATHS)
-
-# Add Chat Limit Middleware
-'''app.add_middleware(ChatLimitMiddleware,
-                   base_url=settings.BASE_URL)'''
 
 # Register the exception handlers
 register_exception_handlers(app)
