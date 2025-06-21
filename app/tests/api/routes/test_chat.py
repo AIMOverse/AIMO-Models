@@ -61,12 +61,16 @@ def test_sse_chat(client: TestClient, get_access_token) -> None:
     received_content = False
     received_done = False
     event_count = 0
+    error_count = 0
+    max_errors = 3
+    all_raw_lines = []
 
     for line in response.iter_lines():
         if not line:
             continue
 
         decoded_line = line.decode("utf-8") if isinstance(line, bytes) else line
+        all_raw_lines.append(decoded_line)
         logging.debug(f"Raw line: {decoded_line}")
 
         if not decoded_line.startswith("data: "):
@@ -84,9 +88,13 @@ def test_sse_chat(client: TestClient, get_access_token) -> None:
             continue
 
         try:
-            # Replace single quotes with double quotes to ensure correct JSON format
-            json_str = json_str.replace("'", '"')
-            data = json.loads(json_str)
+            logging.debug(f"Attempting to parse JSON: {json_str}")
+            
+            try:
+                data = json.loads(json_str)
+            except json.JSONDecodeError:
+                json_str = json_str.replace("'", '"')
+                data = json.loads(json_str)
             
             # Check completion marker - additional section
             if "choices" in data and data["choices"] and \
@@ -108,17 +116,31 @@ def test_sse_chat(client: TestClient, get_access_token) -> None:
             if "role" in delta and delta["role"] == "assistant":
                 received_role = True
                 logging.info("Received role event")
-            elif "content" in delta and delta["content"].strip():
+            if "content" in delta and delta["content"]:
                 received_content = True
                 logging.info(f"Received content: {delta['content']}")
 
         except json.JSONDecodeError as e:
-            logging.warning(f"JSON parse error: {e} for line: {json_str}")
+            error_count += 1
+            error_position = f"line 1 column {e.pos}" if hasattr(e, 'pos') else "unknown position"
+            error_msg = f"JSON parse error: {e} at {error_position}"
+            logging.error(f"{error_msg} for line: {json_str}")
+            
+            if error_count >= max_errors:
+                all_lines_str = "\n".join(all_raw_lines)
+                assert False, f"Too many JSON parsing errors ({error_count}). Last error: {error_msg}\nAll raw lines received:\n{all_lines_str}"
             continue
+        except AssertionError as e:
+            all_lines_str = "\n".join(all_raw_lines)
+            logging.error(f"Assertion failed: {e}. JSON: {json_str}")
+            assert False, f"Assertion error: {e}\nJSON: {json_str}\nAll raw lines:\n{all_lines_str}"
 
-    logging.info(f"Test summary: events={event_count}, role={received_role}, content={received_content}, done={received_done}")
+    logging.info(f"Test summary: events={event_count}, role={received_role}, content={received_content}, done={received_done}, errors={error_count}")
+    
+    if not received_content:
+        all_lines_str = "\n".join(all_raw_lines)
+        assert received_content, f"Did not receive any content. All raw lines received:\n{all_lines_str}"
     
     # Validation
     assert event_count > 0, "No events received"
-    assert received_content, "Did not receive any content"
     assert received_done, "Did not receive completion marker"

@@ -317,3 +317,9 @@ app/ai/static/models/EmotionModule/*
 # keep static folder
 static/*
 !static/.keep
+
+# Prompt Data
+data/prompts/*
+
+# Database files
+.db
