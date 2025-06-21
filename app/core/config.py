@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Invitation Code Expire Time
     INVITATION_CODE_EXPIRE_TIME: int = 7  # days
+    BOUND_INVITATION_CODE_EXPIRE_TIME: int = 365  # days
 
     # Authentication Excludes Paths
     AUTH_EXCLUDE_PATHS: List[str] = field(

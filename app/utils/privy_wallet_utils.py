@@ -1,5 +1,9 @@
+from fastapi import Depends, HTTPException
+from fastapi import security
+from fastapi.security import HTTPAuthorizationCredentials
 import requests
 from app.core.config import settings
+from app.utils.jwt_utils import JWTUtils
 
 class PrivyWalletUtils:
     """Handles Privy wallet authentication"""

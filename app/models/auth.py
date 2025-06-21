@@ -45,6 +45,7 @@ class WalletVerifyResponse(BaseModel):
 
 class BindInvitationCodeRequest(BaseModel):
     """Request format for binding an invitation code"""
+    wallet_address: str
     invitation_code: str
 
 
