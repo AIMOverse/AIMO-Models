@@ -27,14 +27,15 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "AIMO-Models"  # Title on generated documentation
 
-    # Maximum number of chat messages to store
-    MAX_CHAT_COUNT: int = int(os.environ.get("MAX_CHAT_COUNT", 1000))
-
     # LLM API KEY
     REDPILL_API_KEY: str = os.environ.get("REDPILL_API_KEY")
 
     # JWT Secret Key
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
+
+    # PRIVY BASE AND KEY for JWT
+    PRIVY_API_KEY: str = os.environ.get("PRIVY_API_KEY")
+    PRIVY_API_BASE:str = os.environ.get("PRIVY_API_BASE")
 
     # JWT Expire Time
     ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
