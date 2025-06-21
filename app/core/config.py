@@ -28,16 +28,21 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AIMO-Models"  # Title on generated documentation
 
     # LLM API KEY
-    NEBULA_API_KEY: str = os.environ.get("NEBULA_API_KEY")
+    REDPILL_API_KEY: str = os.environ.get("REDPILL_API_KEY")
 
     # JWT Secret Key
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
+
+    # PRIVY BASE AND KEY for JWT
+    PRIVY_API_KEY: str = os.environ.get("PRIVY_API_KEY")
+    PRIVY_API_BASE:str = os.environ.get("PRIVY_API_BASE")
 
     # JWT Expire Time
     ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
 
     # Invitation Code Expire Time
     INVITATION_CODE_EXPIRE_TIME: int = 7  # days
+    BOUND_INVITATION_CODE_EXPIRE_TIME: int = 365  # days
 
     # Authentication Excludes Paths
     AUTH_EXCLUDE_PATHS: List[str] = field(
