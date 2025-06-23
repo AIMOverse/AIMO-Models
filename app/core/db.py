@@ -7,7 +7,7 @@ import os
 if os.environ.get("TESTING") == "True":
     DATABASE_URL = "sqlite:///:memory:"
 else:
-    DATABASE_URL = "postgresql://ai_model:A1-M0Dn189z2d86@localhost:5432/ai_model"
+    DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 
