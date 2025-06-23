@@ -54,41 +54,37 @@ async def check_invitation_code(data: CheckInvitationCodeRequest) -> CheckInvita
 @router.post("/wallet-verify", response_model=WalletVerifyResponse)
 async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
     """Verify wallet and return JWT token"""
-    try:
-        # Verify Privy authentication token
-        privy_data = await PrivyWalletUtils.verify_auth_token(data.auth_token)
+    # Verify Privy authentication token
+    privy_data = await PrivyWalletUtils.verify_auth_token(data.auth_token)
         
-        # Ensure the wallet address in the token matches the address in the request
-        if privy_data["wallet_address"] != data.wallet_address:
-            raise AuthException(401, "Wallet address mismatch")
+    # Ensure the wallet address in the token matches the address in the request
+    if privy_data["wallet_address"] != data.wallet_address:
+        raise AuthException(401, "Wallet address mismatch")
         
-        is_new_user = False
-        with Session(engine) as session:
-            # Check if the wallet account exists
-            wallet_account = session.get(WalletAccount, data.wallet_address)
+    is_new_user = False
+    with Session(engine) as session:
+        # Check if the wallet account exists
+        wallet_account = session.get(WalletAccount, data.wallet_address)
             
-            if wallet_account:
-                # Update last login time
-                wallet_account.last_login = datetime.datetime.now()
-                session.add(wallet_account)
-                session.commit()
+        if wallet_account:
+            # Update last login time
+            wallet_account.last_login = datetime.datetime.now()
+            session.commit()
                 
-                # Check if the bound invitation code has expired
-                invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
-                if not invitation_code or invitation_code.used or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
-                    raise AuthException(401, "Invalid invitation code")
-            else:
-                is_new_user = True
+            # Check if the bound invitation code has expired
+            invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
+            if not invitation_code or invitation_code.used or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
+                raise AuthException(401, "Invalid invitation code")
+        else:
+            is_new_user = True
                 
-        # Generate JWT token containing the wallet address
-        access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
+    # Generate JWT token containing the wallet address
+    access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
         
-        return WalletVerifyResponse(
-            access_token=access_token,
-            is_new_user=is_new_user
+    return WalletVerifyResponse(
+        access_token=access_token,
+        is_new_user=is_new_user
         )
-    except Exception as e:
-        raise AuthException(401, str(e))
 
 @router.post("/bind-invitation-code", response_model=BindInvitationCodeResponse)
 async def bind_invitation_code(
