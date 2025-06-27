@@ -23,14 +23,17 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Set environment variables
-ENV NEBULA_API_KEY=${NEBULA_API_KEY}
+ENV REDPILL_API_KEY=${REDPILL_API_KEY} 
 ENV SECRET_KEY=${SECRET_KEY}
 ENV ADMIN_API_KEY=${ADMIN_API_KEY}
 ENV DATABASE_URL=${DATABASE_URL}
 
+# Copy the EmotionModule model into the container
+COPY /app/ai/static/models/EmotionModule /app/ai/static/models/EmotionModule
+
 # Clone the Hugging Face model repository using a secure token
-ARG HF_ACCESS_TOKEN
-RUN git clone https://Wes1eyyy:${HF_ACCESS_TOKEN}@huggingface.co/Wes1eyyy/AIMO-EmotionModule app/ai/static/models/EmotionModule
+# ARG HF_ACCESS_TOKEN
+# RUN git clone https:AIMOverse/AIMO-EmotionModule app/ai/static/models/EmotionModule
 
 # Copy the application code into the container
 COPY . .
