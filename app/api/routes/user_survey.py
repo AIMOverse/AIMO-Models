@@ -28,8 +28,6 @@ async def submit_survey(
     Returns:
         SurveyResponse: Processing result and standardized data
     """
-     # Validate token
-    decoded_token = jwt_utils.decode_token(token)
 
     # Construct response with received data
     return SurveyResponse(

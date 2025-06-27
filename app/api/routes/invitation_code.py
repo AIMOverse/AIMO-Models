@@ -38,7 +38,7 @@ async def generate_invitation_code(api_key: str = Header(...)) -> GenerateInvita
         expiration_time = datetime.datetime.now() + datetime.timedelta(
             days=settings.INVITATION_CODE_EXPIRE_TIME)  # Calculate the expiration time
         invitation_code = InvitationCode(code=code_str, expiration_time=expiration_time,
-                                         used=False)  # Create a new invitation code object
+                                         used=False, bound=False)  # Create a new invitation code object
         # Add the new invitation code to the database
         session.add(invitation_code)
         session.commit()

@@ -14,3 +14,5 @@ class InvitationCode(SQLModel, table=True):
                                                        datetime.timedelta(days=settings.INVITATION_CODE_EXPIRE_TIME),
                                                description="Expiration time of the invitation code")
     used: bool = Field(default=False, description="Whether the invitation code has been used")
+
+    bound: bool = Field(default=False, description="Whether the invitation code has been bound to a wallet")
