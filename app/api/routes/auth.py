@@ -98,8 +98,7 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
 
 @router.post("/bind-invitation-code", response_model=BindInvitationCodeResponse)
 async def bind_invitation_code(
-    data: BindInvitationCodeRequest,
-    wallet_address: str = Depends(BindInvitationCodeRequest.wallet_address)
+    data: BindInvitationCodeRequest
 ) -> BindInvitationCodeResponse:
     """Bind invitation code to wallet address"""
     with Session(engine) as session:
