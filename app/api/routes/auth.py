@@ -1,6 +1,6 @@
 import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 from sqlmodel import Session
 
 from app.core.db import engine
@@ -203,3 +203,19 @@ async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
         raise
     except Exception as e:
         raise AuthException(500, f"An error occurred during email login: {str(e)}")
+
+
+@router.post("/email-login-form", response_model=EmailLoginResponse)
+async def email_login_form(emailAddress: str = Form(...)) -> EmailLoginResponse:
+    """
+    Email login via form data - generate invitation code and send via email
+    
+    Args:
+        emailAddress (str): Email address from form data
+        
+    Returns:
+        EmailLoginResponse: Response containing success status and message
+    """
+    # Create a request object to reuse existing logic
+    email_request = EmailLoginRequest(email=emailAddress)
+    return await email_login(email_request)

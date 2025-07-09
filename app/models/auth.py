@@ -56,7 +56,7 @@ class BindInvitationCodeResponse(BaseModel):
 
 class EmailLoginRequest(BaseModel):
     """Request format for email login"""
-    email: str = Field(..., description="User email address")
+    email: str = Field(..., description="User email address", alias="emailAddress")
     
     @field_validator('email')
     def validate_email(cls, v):
@@ -68,6 +68,8 @@ class EmailLoginRequest(BaseModel):
         if not re.match(email_pattern, v.strip()):
             raise ValueError("Invalid email format")
         return v.strip().lower()
+    
+    model_config = {"populate_by_name": True}
 
 
 class EmailLoginResponse(BaseModel):
