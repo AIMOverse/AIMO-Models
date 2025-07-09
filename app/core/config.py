@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     PRIVY_API_KEY: str = os.environ.get("PRIVY_API_KEY")
     PRIVY_API_BASE:str = os.environ.get("PRIVY_API_BASE")
 
+    # Listmonk Settings
+    LISTMONK_API_URL: str = os.environ.get("LISTMONK_API_URL", "http://localhost:9000")
+    LISTMONK_USERNAME: str = os.environ.get("LISTMONK_USERNAME", "listmonk")
+    LISTMONK_PASSWORD: str = os.environ.get("LISTMONK_PASSWORD", "listmonk")
+    DEFAULT_SENDER_EMAIL: str = os.environ.get("DEFAULT_SENDER_EMAIL", "noreply@aimo.com")
+    DEFAULT_SENDER_NAME: str = os.environ.get("DEFAULT_SENDER_NAME", "AIMO Team")
+    
+    # Email Settings
+    EMAIL_LOGIN_EXPIRE_TIME: int = 30  # minutes
+
     # JWT Expire Time
     ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
 
@@ -47,6 +57,7 @@ class Settings(BaseSettings):
     # Authentication Excludes Paths
     AUTH_EXCLUDE_PATHS: List[str] = field(
         default_factory=lambda: ["/auth/check-invitation-code",
+                                 "/auth/email-login",
                                  "/invitation-code/generate-invitation-code",
                                  "/invitation-code/get-available-invitation-codes"])
 

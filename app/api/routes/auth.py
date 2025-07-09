@@ -6,10 +6,22 @@ from sqlmodel import Session
 from app.core.db import engine
 from app.entity.WalletAccount import WalletAccount
 from app.entity.invitation_code import InvitationCode
+from app.entity.EmailUser import EmailUser
 from app.exceptions.auth_exceptions import AuthException
-from app.models.auth import BindInvitationCodeRequest, BindInvitationCodeResponse, CheckInvitationCodeRequest, CheckInvitationCodeResponse, WalletVerifyRequest, WalletVerifyResponse
+from app.models.auth import (
+    BindInvitationCodeRequest, 
+    BindInvitationCodeResponse, 
+    CheckInvitationCodeRequest, 
+    CheckInvitationCodeResponse, 
+    WalletVerifyRequest, 
+    WalletVerifyResponse,
+    EmailLoginRequest,
+    EmailLoginResponse
+)
 from app.utils.jwt_utils import JWTUtils
 from app.utils.privy_wallet_utils import PrivyWalletUtils
+from app.utils.listmonk_utils import listmonk_utils
+from app.utils.invitation_code_utils import generate_unique_invitation_code, create_invitation_code_in_db
 from app.core.config import settings  # Import settings from the configuration module
 
 """
@@ -48,8 +60,6 @@ async def check_invitation_code(data: CheckInvitationCodeRequest) -> CheckInvita
         session.refresh(invitation_code)
     access_token = jwt_utils.generate_token({"InvitationCode": code})  # Generate a new access token
     return CheckInvitationCodeResponse(access_token=access_token)
-
-# Add the following routes to the existing file
 
 @router.post("/wallet-verify", response_model=WalletVerifyResponse)
 async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
@@ -122,3 +132,75 @@ async def bind_invitation_code(
         success=True,
         message="Invitation code bound successfully"
     )
+
+@router.post("/email-login", response_model=EmailLoginResponse)
+async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
+    """
+    Email login - generate invitation code and send via email
+    
+    Args:
+        data (EmailLoginRequest): Contains the email address
+        
+    Returns:
+        EmailLoginResponse: Response containing success status and message
+    """
+    try:
+        # Check Listmonk health first
+        if not await listmonk_utils.check_listmonk_health():
+            raise AuthException(503, "Email service is currently unavailable")
+        
+        email = data.email
+        expiry_minutes = settings.EMAIL_LOGIN_EXPIRE_TIME
+        
+        # Generate unique invitation code
+        invitation_code = generate_unique_invitation_code()
+        
+        # Save to database
+        create_invitation_code_in_db(invitation_code, expiry_minutes)
+        
+        # Create or update email user record
+        with Session(engine) as session:
+            email_user = session.get(EmailUser, email)
+            if email_user:
+                # Update existing user
+                email_user.invitation_code = invitation_code
+                email_user.code_generated_at = datetime.datetime.now()
+                email_user.code_expires_at = datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes)
+                email_user.last_login = datetime.datetime.now()
+            else:
+                # Create new email user
+                email_user = EmailUser(
+                    email=email,
+                    invitation_code=invitation_code,
+                    code_generated_at=datetime.datetime.now(),
+                    code_expires_at=datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes),
+                    created_at=datetime.datetime.now(),
+                    last_login=datetime.datetime.now()
+                )
+            
+            session.add(email_user)
+            session.commit()
+        
+        # Create subscriber in Listmonk if needed
+        await listmonk_utils.create_subscriber_if_not_exists(email)
+        
+        # Send invitation code email
+        email_sent = await listmonk_utils.send_invitation_code_email(
+            recipient_email=email,
+            invitation_code=invitation_code,
+            expiry_minutes=expiry_minutes
+        )
+        
+        if not email_sent:
+            raise AuthException(500, "Failed to send invitation email")
+        
+        return EmailLoginResponse(
+            success=True,
+            message=f"Invitation code sent to {email}. Please check your email.",
+            expires_in_minutes=expiry_minutes
+        )
+        
+    except AuthException:
+        raise
+    except Exception as e:
+        raise AuthException(500, f"An error occurred during email login: {str(e)}")
