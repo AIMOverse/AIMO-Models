@@ -103,7 +103,7 @@ async def bind_invitation_code(
     """Bind invitation code to wallet address"""
     with Session(engine) as session:
         # Check if the wallet already has a bound invitation code
-        wallet_account = session.get(WalletAccount, wallet_address)
+        wallet_account = session.get(WalletAccount, data.wallet_address)
         if wallet_account:
             raise AuthException(400, "Wallet already has a bound invitation code")
         
@@ -117,7 +117,7 @@ async def bind_invitation_code(
         invitation_code.expiration_time = datetime.datetime.now() + datetime.timedelta(days=settings.BOUND_INVITATION_CODE_EXPIRE_TIME)
 
         wallet_account = WalletAccount(
-            wallet_address=wallet_address,
+            wallet_address=data.wallet_address,
             invitation_code=data.invitation_code,
             created_at=datetime.datetime.now(),
             last_login=datetime.datetime.now()
