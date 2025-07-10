@@ -53,3 +53,27 @@ class BindInvitationCodeResponse(BaseModel):
     """Response format for binding an invitation code"""
     success: bool
     message: str
+
+class EmailLoginRequest(BaseModel):
+    """Request format for email login"""
+    email: str = Field(..., description="User email address", alias="emailAddress")
+    
+    @field_validator('email')
+    def validate_email(cls, v):
+        if not v.strip():
+            raise ValueError("Empty email address provided")
+        # Basic email validation
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, v.strip()):
+            raise ValueError("Invalid email format")
+        return v.strip().lower()
+    
+    model_config = {"populate_by_name": True}
+
+
+class EmailLoginResponse(BaseModel):
+    """Response format for email login"""
+    success: bool = Field(..., description="Whether the email was sent successfully")
+    message: str = Field(..., description="Response message")
+    expires_in_minutes: int = Field(..., description="Code expiry time in minutes")
