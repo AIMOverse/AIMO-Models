@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
 """
-Author: Jack Pan
-Date: 2025-1-20
+Author: Jack Pan, Wesley Xu
+Date: 2025-7-10
 Description:
     This file is for settings of the application
 """
@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     LISTMONK_PASSWORD: str = os.environ.get("LISTMONK_PASSWORD")
     DEFAULT_SENDER_EMAIL: str = os.environ.get("DEFAULT_SENDER_EMAIL")
     DEFAULT_SENDER_NAME: str = os.environ.get("DEFAULT_SENDER_NAME")
+    LISTMONK_INVITATION_TEMPLATE_ID: int = int(os.environ.get("LISTMONK_INVITATION_TEMPLATE_ID"))
     
     # Email Settings
     EMAIL_LOGIN_EXPIRE_TIME: int = 30  # minutes
