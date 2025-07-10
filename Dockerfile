@@ -29,11 +29,11 @@ ENV ADMIN_API_KEY=${ADMIN_API_KEY}
 ENV DATABASE_URL=${DATABASE_URL}
 
 # Copy the EmotionModule model into the container
-COPY /app/ai/static/models/EmotionModule /app/ai/static/models/EmotionModule
+# COPY /app/ai/static/models/EmotionModule /app/ai/static/models/EmotionModule
 
 # Clone the Hugging Face model repository using a secure token
-# ARG HF_ACCESS_TOKEN
-# RUN git clone https:AIMOverse/AIMO-EmotionModule app/ai/static/models/EmotionModule
+ARG HF_ACCESS_TOKEN
+RUN git clone https:AIMOverse/AIMO-EmotionModule app/ai/static/models/EmotionModule
 
 # Copy the application code into the container
 COPY . .
