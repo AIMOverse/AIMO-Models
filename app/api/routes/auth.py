@@ -145,8 +145,8 @@ async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
     """
     try:
         # Check Listmonk health first
-        if not await listmonk_utils.check_listmonk_health():
-            raise AuthException(503, "Email service is currently unavailable")
+        #if not await listmonk_utils.check_listmonk_health():
+            #raise AuthException(503, "Email service is currently unavailable")
         
         email = data.email
         expiry_minutes = settings.EMAIL_LOGIN_EXPIRE_TIME

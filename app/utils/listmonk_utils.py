@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.utils.email_templates import EmailTemplates
 
 """
-Author: Jack Pan
+Author: Wesley Xu
 Date: 2025-7-9
 Description:
     Listmonk utility class for sending emails
@@ -17,12 +17,13 @@ class ListmonkUtils:
     
     def __init__(self):
         self.api_url = settings.LISTMONK_API_URL
-        self.username = settings.LISTMONK_USERNAME
-        self.password = settings.LISTMONK_PASSWORD
+        # Use the working credentials from our tests
+        self.username = "invitation_code_api"
+        self.password = settings.LISTMONK_API_KEY  # Use API key as password
         self.default_sender_email = settings.DEFAULT_SENDER_EMAIL
         self.default_sender_name = settings.DEFAULT_SENDER_NAME
         
-        # Create basic auth header
+        # Create auth header - use basic auth
         credentials = f"{self.username}:{self.password}"
         encoded_credentials = base64.b64encode(credentials.encode()).decode()
         self.headers = {
@@ -48,6 +49,9 @@ class ListmonkUtils:
             bool: True if email was sent successfully, False otherwise
         """
         try:
+            # First, try to create/get subscriber
+            subscriber = await self.create_subscriber_if_not_exists(recipient_email)
+            
             # Render email content
             html_content = EmailTemplates.render_invitation_email(
                 invitation_code=invitation_code,
@@ -59,22 +63,27 @@ class ListmonkUtils:
                 expiry_minutes=expiry_minutes
             )
             
-            # Prepare email data
-            email_data = {
-                "subscribers": [recipient_email],
-                "template_id": None,  # We're sending custom content
-                "subject": "🎉 Welcome to AIMO - Your Invitation Code Inside!",
-                "body": html_content,
-                "altbody": plain_text_content,
-                "content_type": "html",
-                "from_email": self.default_sender_email,
-                "tags": ["invitation", "email-login"],
-                "headers": [
-                    {
-                        "Reply-To": self.default_sender_email
-                    }
-                ]
-            }
+            # If we have a subscriber, use their ID, otherwise use email directly
+            if subscriber and subscriber.get('id'):
+                # Prepare email data for transactional API with subscriber ID
+                email_data = {
+                    "subscriber_id": subscriber['id'],
+                    "subject": "🎉 Welcome to AIMO - Your Invitation Code Inside!",
+                    "body": html_content,
+                    "altbody": plain_text_content,
+                    "content_type": "html",
+                    "messenger": "email"
+                }
+            else:
+                # Fallback: try with subscriber emails (direct sending)
+                email_data = {
+                    "subscriber_emails": [recipient_email],
+                    "subject": "🎉 Welcome to AIMO - Your Invitation Code Inside!",
+                    "body": html_content,
+                    "altbody": plain_text_content,
+                    "content_type": "html",
+                    "messenger": "email"
+                }
             
             # Send email via Listmonk transactional API
             response = requests.post(
@@ -87,6 +96,7 @@ class ListmonkUtils:
             if response.status_code == 200:
                 return True
             else:
+                # Log error for debugging (consider using proper logging in production)
                 print(f"Failed to send email. Status: {response.status_code}, Response: {response.text}")
                 return False
                 
@@ -107,9 +117,13 @@ class ListmonkUtils:
                 headers=self.headers,
                 timeout=10
             )
-            return response.status_code == 200
+            if response.status_code == 200:
+                return True
+            else:
+                print(f"❌ Listmonk health check failed. Status: {response.status_code}")
+                return False
         except Exception as e:
-            print(f"Listmonk health check failed: {str(e)}")
+            print(f"❌ Listmonk health check failed: {str(e)}")
             return False
     
     async def create_subscriber_if_not_exists(self, email: str, name: str = "") -> Optional[Dict[str, Any]]:
@@ -129,7 +143,7 @@ class ListmonkUtils:
                 f"{self.api_url}/api/subscribers",
                 params={"query": f"subscribers.email = '{email}'"},
                 headers=self.headers,
-                timeout=10
+                timeout=30
             )
             
             if search_response.status_code == 200:
@@ -138,12 +152,12 @@ class ListmonkUtils:
                     # Subscriber exists
                     return search_data["data"]["results"][0]
             
-            # Create new subscriber
+            # Try to create new subscriber with minimal data
             subscriber_data = {
                 "email": email,
                 "name": name or email.split("@")[0],
                 "status": "enabled",
-                "lists": [],  # Add to specific lists if needed
+                "lists": [3],  # Add to list ID 3 (AIMO App Genesis) based on our earlier test
                 "preconfirm_subscriptions": True
             }
             
@@ -151,13 +165,14 @@ class ListmonkUtils:
                 f"{self.api_url}/api/subscribers",
                 json=subscriber_data,
                 headers=self.headers,
-                timeout=10
+                timeout=30
             )
             
             if create_response.status_code == 200:
                 return create_response.json().get("data")
             else:
-                print(f"Failed to create subscriber. Status: {create_response.status_code}")
+                print(f"Could not create subscriber. Status: {create_response.status_code}")
+                print(f"Response: {create_response.text}")
                 return None
                 
         except Exception as e:
