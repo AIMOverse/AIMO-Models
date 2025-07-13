@@ -4,6 +4,7 @@ import os
 import jwt
 
 from app.exceptions.jwt_exceptions import JWTException
+from app.core.config import settings
 
 
 class JWTUtils:
@@ -11,9 +12,9 @@ class JWTUtils:
     
     def __init__(self, algorithm='HS256'):
         """Initialize JWT utils with configuration"""
-        self.secret_key = os.environ.get("SECRET_KEY")
+        self.secret_key = settings.SECRET_KEY
         self.algorithm = algorithm
-        self.expire_time = int(os.environ.get("ACCESS_TOKEN_EXPIRE_TIME", 7))
+        self.expire_time = int(settings.ACCESS_TOKEN_EXPIRE_TIME)
         
     def generate_token(self, payload):
         """Generate JWT token"""
