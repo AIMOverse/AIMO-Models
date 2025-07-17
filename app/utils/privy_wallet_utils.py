@@ -9,12 +9,12 @@ class PrivyWalletUtils:
     """Handles Privy wallet authentication"""
     
     @staticmethod
-    async def verify_auth_token(auth_token: str) -> dict:
+    async def verify_privy_token(privy_token: str) -> dict:
         """
         Verify Privy authentication token and retrieve wallet address
         
         Args:
-            auth_token: Privy authentication token
+            privy_token: Privy authentication token
             
         Returns:
             dict: Contains user information and wallet address
@@ -28,7 +28,7 @@ class PrivyWalletUtils:
         response = requests.get(
             f"{settings.PRIVY_API_BASE}/auth/verify",
             headers=headers,
-            params={"token": auth_token}
+            params={"token": privy_token}
         )
         
         if response.status_code != 200:

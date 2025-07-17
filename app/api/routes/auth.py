@@ -55,7 +55,7 @@ async def check_invitation_code(data: CheckInvitationCodeRequest) -> CheckInvita
 async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
     """Verify wallet and return JWT token"""
     # Verify Privy authentication token
-    privy_data = await PrivyWalletUtils.verify_auth_token(data.auth_token)
+    privy_data = await PrivyWalletUtils.verify_privy_token(data.privy_token)
         
     # Ensure the wallet address in the token matches the address in the request
     if privy_data["wallet_address"] != data.wallet_address:
