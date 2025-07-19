@@ -221,5 +221,5 @@ async def email_login_form(emailAddress: str = Form(...)) -> EmailLoginResponse:
         EmailLoginResponse: Response containing success status and message
     """
     # Create a request object to reuse existing logic
-    email_request = EmailLoginRequest(email=emailAddress)
+    email_request = EmailLoginRequest(emailAddress=emailAddress)
     return await email_login(email_request)
