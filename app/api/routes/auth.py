@@ -65,16 +65,20 @@ async def check_invitation_code(data: CheckInvitationCodeRequest) -> CheckInvita
 async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
     """Verify wallet and return JWT token"""
     # Verify Privy authentication token
-    privy_data = await PrivyWalletUtils.verify_privy_token(data.privy_token)
+    try:
+        solana_addresses = await PrivyWalletUtils.get_linked_solana_addresses(data.privy_id_token)
+    except Exception as e:
+        raise AuthException(401, f"Failed to verify wallet address: {e}")
         
     # Ensure the wallet address in the token matches the address in the request
-    if privy_data["wallet_address"] != data.wallet_address:
-        raise AuthException(401, "Wallet address mismatch")
+    request_wallet_address = data.wallet_address.strip()
+    if request_wallet_address not in solana_addresses:
+        raise AuthException(401, "Invalid wallet address")
         
     is_new_user = False
     with Session(engine) as session:
         # Check if the wallet account exists
-        wallet_account = session.get(WalletAccount, data.wallet_address)
+        wallet_account = session.get(WalletAccount, request_wallet_address)
             
         if wallet_account:
             # Update last login time
@@ -93,8 +97,8 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
         
     return WalletVerifyResponse(
         access_token=access_token,
-            is_new_user=is_new_user
-        )
+        is_new_user=is_new_user
+    )
 
 @router.post("/bind-invitation-code", response_model=BindInvitationCodeResponse)
 async def bind_invitation_code(
