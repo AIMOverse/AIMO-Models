@@ -84,21 +84,30 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
             # Update last login time
             wallet_account.last_login = datetime.datetime.now()
             session.commit()
-                
-            # Check if the bound invitation code has expired
-            invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
-            if not invitation_code or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
-                raise AuthException(401, "Invalid invitation code")
+            
+            """
+            Accounts need a valid invitation code to be created, so no need to check if the invitation code is valid
+            """
+            # # Check if the bound invitation code has expired
+            # invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
+            # if not invitation_code or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
+            #     raise AuthException(401, "Invalid invitation code")
+            access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
+            return WalletVerifyResponse(
+                access_token=access_token,
+            )
         else:
-            is_new_user = True
-                
+            return WalletVerifyResponse(
+                access_token=None,
+            )
+    
     # Generate JWT token containing the wallet address
-    access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
+    # access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
         
-    return WalletVerifyResponse(
-        access_token=access_token,
-        is_new_user=is_new_user
-    )
+    # return WalletVerifyResponse(
+    #     access_token=access_token,
+    #     is_new_user=is_new_user
+    # )
 
 @router.post("/bind-invitation-code", response_model=BindInvitationCodeResponse)
 async def bind_invitation_code(
@@ -130,10 +139,11 @@ async def bind_invitation_code(
         session.add(invitation_code)
         session.add(wallet_account)
         session.commit()
+
+    access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
         
     return BindInvitationCodeResponse(
-        success=True,
-        message="Invitation code bound successfully"
+        access_token=access_token
     )
 
 @router.post("/email-login", response_model=EmailLoginResponse)

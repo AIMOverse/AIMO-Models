@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -39,8 +39,7 @@ class WalletVerifyRequest(BaseModel):
 
 class WalletVerifyResponse(BaseModel):
     """Response format for verifying a wallet"""
-    access_token: str
-    is_new_user: bool  # Indicates whether the user needs to bind an invitation code
+    access_token: Optional[str] = Field(None, description="If the user already bound an invitation code, return the access token")
 
 
 class BindInvitationCodeRequest(BaseModel):
@@ -51,8 +50,7 @@ class BindInvitationCodeRequest(BaseModel):
 
 class BindInvitationCodeResponse(BaseModel):
     """Response format for binding an invitation code"""
-    success: bool
-    message: str
+    access_token: str = Field(..., description="Successfully bound invitation code, return the access token")
 
 class EmailLoginRequest(BaseModel):
     """Request format for email login"""
