@@ -1,38 +1,32 @@
-from fastapi import Depends, HTTPException
-from fastapi import security
-from fastapi.security import HTTPAuthorizationCredentials
+from typing import List
 import requests
 from app.core.config import settings
-from app.utils.jwt_utils import JWTUtils
+from privy import AsyncPrivyAPI
 
 class PrivyWalletUtils:
     """Handles Privy wallet authentication"""
     
     @staticmethod
-    async def verify_privy_token(privy_token: str) -> dict:
+    async def get_linked_solana_addresses(privy_id_token: str) -> List[str]:
         """
-        Verify Privy authentication token and retrieve wallet address
+        Verify Privy ID token and verify wallet address
         
         Args:
-            privy_token: Privy authentication token
+            privy_id_token: Privy ID token
             
         Returns:
-            dict: Contains user information and wallet address
+            dict: Contains user information
         """
         # Implementation required based on Privy's API documentation
         # Example implementation:
-        headers = {
-            "Authorization": f"Bearer {settings.PRIVY_API_KEY}"
-        }
-        
-        response = requests.get(
-            f"{settings.PRIVY_API_BASE}/auth/verify",
-            headers=headers,
-            params={"token": privy_token}
-        )
-        
-        if response.status_code != 200:
-            raise Exception("Invalid Privy auth token")
-            
-        data = response.json()
-        return data
+        app_id = settings.PRIVY_APP_ID
+        app_secret = settings.PRIVY_APP_SECRET
+
+        client = AsyncPrivyAPI(app_id=app_id, app_secret=app_secret)
+        try:
+            user = await client.users.get_by_id_token(id_token=privy_id_token)
+            linked_accounts = user.linked_accounts
+            solana_addresses = [account.address for account in linked_accounts if account.type == "wallet" and account.chain_type == "solana"]
+            return solana_addresses
+        except Exception as e:
+            raise Exception(f"Failed to get linked solana addresses: {e}")

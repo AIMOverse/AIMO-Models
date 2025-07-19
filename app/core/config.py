@@ -33,10 +33,6 @@ class Settings(BaseSettings):
     # JWT Secret Key
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
 
-    # PRIVY BASE AND KEY for JWT
-    PRIVY_API_KEY: str = os.environ.get("PRIVY_API_KEY")
-    PRIVY_API_BASE:str = os.environ.get("PRIVY_API_BASE")
-
     # Listmonk Settings
     LISTMONK_API_URL: str = os.environ.get("LISTMONK_API_URL")
     LISTMONK_API_KEY: str = os.environ.get("LISTMONK_API_KEY")
@@ -70,6 +66,14 @@ class Settings(BaseSettings):
 
     # Database URL
     DATABASE_URL: str = os.environ.get("DATABASE_URL")
+
+    # Redis
+    REDIS_HOST: str = os.environ.get("REDIS_HOST")
+    REDIS_PORT: int = int(os.environ.get("REDIS_PORT"))
+
+    # Privy API Key
+    PRIVY_APP_ID: str = os.environ.get("PRIVY_APP_ID")
+    PRIVY_APP_SECRET: str = os.environ.get("PRIVY_APP_SECRET")
 
 
 settings = Settings()

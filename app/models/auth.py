@@ -33,8 +33,8 @@ class GetAvailableInvitationCodesResponse(BaseModel):
 
 class WalletVerifyRequest(BaseModel):
     """Request format for verifying a wallet"""
-    wallet_address: str
-    privy_token: str  # Privy authentication token
+    wallet_address: str = Field(..., description="The wallet address")
+    privy_id_token: str = Field(..., description="The Privy ID token")
 
 
 class WalletVerifyResponse(BaseModel):
