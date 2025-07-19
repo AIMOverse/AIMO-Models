@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     # Authentication Excludes Paths
     AUTH_EXCLUDE_PATHS: List[str] = field(
         default_factory=lambda: ["/auth/check-invitation-code",
+                                 "/auth/wallet-verify",
+                                 "/auth/bind-invitation-code",
                                  "/auth/email-login",
                                  "/invitation-code/generate-invitation-code",
                                  "/invitation-code/get-available-invitation-codes"])
