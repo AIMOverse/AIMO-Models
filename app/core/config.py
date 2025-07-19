@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
 """
-Author: Jack Pan
-Date: 2025-1-20
+Author: Jack Pan, Wesley Xu
+Date: 2025-7-10
 Description:
     This file is for settings of the application
 """
@@ -37,6 +37,18 @@ class Settings(BaseSettings):
     PRIVY_API_KEY: str = os.environ.get("PRIVY_API_KEY")
     PRIVY_API_BASE:str = os.environ.get("PRIVY_API_BASE")
 
+    # Listmonk Settings
+    LISTMONK_API_URL: str = os.environ.get("LISTMONK_API_URL")
+    LISTMONK_API_KEY: str = os.environ.get("LISTMONK_API_KEY")
+    LISTMONK_USERNAME: str = os.environ.get("LISTMONK_USERNAME")
+    LISTMONK_PASSWORD: str = os.environ.get("LISTMONK_PASSWORD")
+    DEFAULT_SENDER_EMAIL: str = os.environ.get("DEFAULT_SENDER_EMAIL")
+    DEFAULT_SENDER_NAME: str = os.environ.get("DEFAULT_SENDER_NAME")
+    LISTMONK_INVITATION_TEMPLATE_ID: int = int(os.environ.get("LISTMONK_INVITATION_TEMPLATE_ID"))
+    
+    # Email Settings
+    EMAIL_LOGIN_EXPIRE_TIME: int = 30  # minutes
+
     # JWT Expire Time
     ACCESS_TOKEN_EXPIRE_TIME: int = 3  # days
 
@@ -49,6 +61,7 @@ class Settings(BaseSettings):
         default_factory=lambda: ["/auth/check-invitation-code",
                                  "/auth/wallet-verify",
                                  "/auth/bind-invitation-code",
+                                 "/auth/email-login",
                                  "/invitation-code/generate-invitation-code",
                                  "/invitation-code/get-available-invitation-codes"])
 

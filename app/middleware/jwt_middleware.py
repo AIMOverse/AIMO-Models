@@ -20,6 +20,12 @@ class JWTMiddleware(BaseHTTPMiddleware):
         self.base_url = base_url
 
     async def dispatch(self, request: Request, call_next):
+            
+        # Allow OPTIONS requests to pass through without authentication (for CORS preflight)
+        if request.method == "OPTIONS":
+            response = await call_next(request)
+            return response
+        
         # Check if the request path is in excluded paths
         path = request.url.path.replace(self.base_url, "")
         if path in self.excluded_paths or request.method == "OPTIONS":

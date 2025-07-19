@@ -52,6 +52,11 @@ app.add_middleware(
     allow_headers=["*"]  # Allow all headers
 )
 
+# Add Auth Middleware
+app.add_middleware(JWTMiddleware,
+                   base_url=settings.BASE_URL,
+                   excluded_paths=settings.AUTH_EXCLUDE_PATHS)
+
 @app.middleware("http")
 async def allow_options_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
@@ -63,11 +68,6 @@ async def allow_options_middleware(request: Request, call_next):
         }
         return JSONResponse(content={}, status_code=200, headers=headers)
     return await call_next(request)
-
-# Add Auth Middleware
-app.add_middleware(JWTMiddleware,
-                   base_url=settings.BASE_URL,
-                   excluded_paths=settings.AUTH_EXCLUDE_PATHS)
 
 # Register the exception handlers
 register_exception_handlers(app)
