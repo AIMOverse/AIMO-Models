@@ -33,19 +33,19 @@ class GetAvailableInvitationCodesResponse(BaseModel):
 
 class WalletVerifyRequest(BaseModel):
     """Request format for verifying a wallet"""
-    wallet_address: str = Field(..., description="The wallet address")
-    privy_id_token: str = Field(..., description="The Privy ID token")
+    privy_access_token: str = Field(..., description="The Privy authentication token")
 
 
 class WalletVerifyResponse(BaseModel):
     """Response format for verifying a wallet"""
+    user_id: Optional[str] = Field(None, description="The user ID from Privy claims")
     access_token: Optional[str] = Field(None, description="If the user already bound an invitation code, return the access token")
 
 
 class BindInvitationCodeRequest(BaseModel):
     """Request format for binding an invitation code"""
-    wallet_address: str
-    invitation_code: str
+    privy_user_id: str = Field(..., description="The Privy user ID")
+    invitation_code: str = Field(..., description="The invitation code to bind")
 
 
 class BindInvitationCodeResponse(BaseModel):
