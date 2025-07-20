@@ -30,3 +30,32 @@ class PrivyWalletUtils:
             return solana_addresses
         except Exception as e:
             raise Exception(f"Failed to get linked solana addresses: {e}")
+        
+
+    @staticmethod
+    async def verify_access_token(privy_auth_token: str) -> dict[str, str]:
+        """
+        Verify the Privy authentication token
+        
+        Args:
+            privy_auth_token: Privy authentication token
+            
+        Returns:
+            bool: True if the token is valid, False otherwise
+        """
+        app_id = settings.PRIVY_APP_ID
+        app_secret = settings.PRIVY_APP_SECRET
+
+        client = AsyncPrivyAPI(app_id=app_id, app_secret=app_secret)
+        try:
+            user = await client.users.verify_access_token(auth_token=privy_auth_token)
+            return {
+                "app_id": user["app_id"],
+                "user_id": user["user_id"],
+                "issuer": user["issuer"],
+                "issued_at": user["issued_at"],
+                "expiration": user["expiration"],
+                "session_id": user["session_id"]
+            }
+        except Exception as e:
+            raise Exception(f"Failed to verify auth token: {e}")

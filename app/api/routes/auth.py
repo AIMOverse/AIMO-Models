@@ -66,19 +66,17 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
     """Verify wallet and return JWT token"""
     # Verify Privy authentication token
     try:
-        solana_addresses = await PrivyWalletUtils.get_linked_solana_addresses(data.privy_id_token)
+        user_claims = await PrivyWalletUtils.verify_access_token(data.privy_access_token)
     except Exception as e:
-        raise AuthException(401, f"Failed to verify wallet address: {e}")
-        
-    # Ensure the wallet address in the token matches the address in the request
-    request_wallet_address = data.wallet_address.strip()
-    if request_wallet_address not in solana_addresses:
-        raise AuthException(401, "Invalid wallet address")
-        
-    is_new_user = False
+        raise AuthException(401, f"Invalid Privy authentication token")
+    
+    user_id = user_claims.get("user_id")
+    if not user_id:
+        raise AuthException(401, "user_id not found in Privy claims")
+
     with Session(engine) as session:
         # Check if the wallet account exists
-        wallet_account = session.get(WalletAccount, request_wallet_address)
+        wallet_account = session.get(WalletAccount, user_id)
             
         if wallet_account:
             # Update last login time
@@ -92,12 +90,14 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
             # invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
             # if not invitation_code or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
             #     raise AuthException(401, "Invalid invitation code")
-            access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
+            access_token = jwt_utils.generate_token({"wallet_address": user_id})
             return WalletVerifyResponse(
+                user_id=user_id,
                 access_token=access_token,
             )
         else:
             return WalletVerifyResponse(
+                user_id=user_id,
                 access_token=None,
             )
     
@@ -116,7 +116,7 @@ async def bind_invitation_code(
     """Bind invitation code to wallet address"""
     with Session(engine) as session:
         # Check if the wallet already has a bound invitation code
-        wallet_account = session.get(WalletAccount, data.wallet_address)
+        wallet_account = session.get(WalletAccount, data.privy_user_id)
         if wallet_account:
             raise AuthException(400, "Wallet already has a bound invitation code")
         
@@ -130,7 +130,7 @@ async def bind_invitation_code(
         invitation_code.expiration_time = datetime.datetime.now() + datetime.timedelta(days=settings.BOUND_INVITATION_CODE_EXPIRE_TIME)
 
         wallet_account = WalletAccount(
-            wallet_address=data.wallet_address,
+            wallet_address=data.privy_user_id,
             invitation_code=data.invitation_code,
             created_at=datetime.datetime.now(),
             last_login=datetime.datetime.now()
@@ -140,7 +140,7 @@ async def bind_invitation_code(
         session.add(wallet_account)
         session.commit()
 
-    access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
+    access_token = jwt_utils.generate_token({"wallet_address": data.privy_user_id})
         
     return BindInvitationCodeResponse(
         access_token=access_token

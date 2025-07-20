@@ -323,3 +323,6 @@ data/prompts/*
 
 # Database files
 .db
+
+# VS Code
+.vscode/
