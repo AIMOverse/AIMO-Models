@@ -6,7 +6,7 @@ from app.entity.User import User
 from app.core.db import engine
 
 """
-Author: Jack Pan
+Author: Wesley Xu
 Date: 2025-7-21
 Description:
     User service for managing unified user authentication
@@ -14,6 +14,46 @@ Description:
 
 
 class UserService:
+
+    @staticmethod
+    def get_token_limit_info(user_id: str) -> dict:
+        """Get user's token limit info: total, used, next_refresh_at"""
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.user_id == user_id)).first()
+            if not user:
+                return None
+            UserService.refresh_token_limit_if_needed(user, session)
+            return {
+                "total": user.daily_token_limit,
+                "used": user.daily_token_used,
+                "next_refresh_at": user.token_limit_refresh_at.isoformat() if user.token_limit_refresh_at else None
+            }
+
+    @staticmethod
+    def check_and_consume_tokens(user_id: str, tokens_needed: int) -> bool:
+        """Check if user has enough tokens left today, and consume if possible."""
+        with Session(engine) as session:
+            user = session.exec(select(User).where(User.user_id == user_id)).first()
+            if not user:
+                return False
+            UserService.refresh_token_limit_if_needed(user, session)
+            if user.daily_token_used + tokens_needed > user.daily_token_limit:
+                return False
+            user.daily_token_used += tokens_needed
+            session.add(user)
+            session.commit()
+            return True
+
+    @staticmethod
+    def refresh_token_limit_if_needed(user: User, session: Session):
+        now = datetime.datetime.now()
+        if not user.token_limit_refresh_at or now >= user.token_limit_refresh_at:
+            user.daily_token_used = 0
+            # Next refresh at next day 00:00
+            tomorrow = now + datetime.timedelta(days=1)
+            user.token_limit_refresh_at = datetime.datetime(year=tomorrow.year, month=tomorrow.month, day=tomorrow.day)
+            session.add(user)
+            session.commit()
     """Service class for managing unified user authentication"""
     
     @staticmethod

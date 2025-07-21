@@ -4,7 +4,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from app.entity.invitation_code import InvitationCode
 
 """
-Author: Jack Pan
+Author: Wesley Xu
 Date: 2025-7-21
 Description:
     Unified user entity that supports both email and wallet authentication
@@ -12,6 +12,9 @@ Description:
 
 
 class User(SQLModel, table=True):
+    daily_token_limit: int = Field(default=10000, description="Daily token usage limit")
+    daily_token_used: int = Field(default=0, description="Tokens used today")
+    token_limit_refresh_at: Optional[datetime.datetime] = Field(default=None, description="Next refresh time for token limit")
     """Unified user entity that supports both email and wallet authentication"""
     __tablename__ = "users"
     
