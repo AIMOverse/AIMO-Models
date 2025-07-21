@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, Form
 from sqlmodel import Session
 
 from app.core.db import engine
-from app.entity.WalletAccount import WalletAccount
+from app.entity.User import User
 from app.entity.invitation_code import InvitationCode
-from app.entity.EmailUser import EmailUser
+from app.services.user_service import UserService
 from app.exceptions.auth_exceptions import AuthException
 from app.models.auth import (
     BindInvitationCodeRequest, 
@@ -74,32 +74,23 @@ async def wallet_verify(data: WalletVerifyRequest) -> WalletVerifyResponse:
     if not user_id:
         raise AuthException(401, "user_id not found in Privy claims")
 
-    with Session(engine) as session:
-        # Check if the wallet account exists
-        wallet_account = session.get(WalletAccount, user_id)
-            
-        if wallet_account:
-            # Update last login time
-            wallet_account.last_login = datetime.datetime.now()
-            session.commit()
-            
-            """
-            Accounts need a valid invitation code to be created, so no need to check if the invitation code is valid
-            """
-            # # Check if the bound invitation code has expired
-            # invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
-            # if not invitation_code or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
-            #     raise AuthException(401, "Invalid invitation code")
-            access_token = jwt_utils.generate_token({"wallet_address": user_id})
-            return WalletVerifyResponse(
-                user_id=user_id,
-                access_token=access_token,
-            )
-        else:
-            return WalletVerifyResponse(
-                user_id=user_id,
-                access_token=None,
-            )
+    # Check if user exists with this wallet address
+    user = UserService.get_user_by_wallet(user_id)
+    
+    if user and user.can_login_with_wallet():
+        # Update last login time
+        UserService.update_last_login(user.user_id)
+        
+        access_token = jwt_utils.generate_token({"wallet_address": user_id, "user_id": user.user_id})
+        return WalletVerifyResponse(
+            user_id=user_id,
+            access_token=access_token,
+        )
+    else:
+        return WalletVerifyResponse(
+            user_id=user_id,
+            access_token=None,
+        )
     
     # Generate JWT token containing the wallet address
     # access_token = jwt_utils.generate_token({"wallet_address": data.wallet_address})
@@ -115,9 +106,9 @@ async def bind_invitation_code(
 ) -> BindInvitationCodeResponse:
     """Bind invitation code to wallet address"""
     with Session(engine) as session:
-        # Check if the wallet already has a bound invitation code
-        wallet_account = session.get(WalletAccount, data.privy_user_id)
-        if wallet_account:
+        # Check if user already exists with this wallet address
+        existing_user = UserService.get_user_by_wallet(data.privy_user_id)
+        if existing_user:
             raise AuthException(400, "Wallet already has a bound invitation code")
         
         # Check the validity of the invitation code
@@ -125,22 +116,20 @@ async def bind_invitation_code(
         if not invitation_code or invitation_code.bound or invitation_code.expiration_time < datetime.datetime.now():
             raise AuthException(401, "Invalid invitation code")
         
-        # Bind the invitation code to the wallet
+        # Bind the invitation code to the wallet by creating a new user
         invitation_code.bound = True
         invitation_code.expiration_time = datetime.datetime.now() + datetime.timedelta(days=settings.BOUND_INVITATION_CODE_EXPIRE_TIME)
-
-        wallet_account = WalletAccount(
+        
+        # Create new user with wallet authentication
+        user = UserService.create_user_with_wallet(
             wallet_address=data.privy_user_id,
-            invitation_code=data.invitation_code,
-            created_at=datetime.datetime.now(),
-            last_login=datetime.datetime.now()
+            invitation_code=data.invitation_code
         )
         
         session.add(invitation_code)
-        session.add(wallet_account)
         session.commit()
 
-    access_token = jwt_utils.generate_token({"wallet_address": data.privy_user_id})
+    access_token = jwt_utils.generate_token({"wallet_address": data.privy_user_id, "user_id": user.user_id})
         
     return BindInvitationCodeResponse(
         access_token=access_token
@@ -149,7 +138,7 @@ async def bind_invitation_code(
 @router.post("/email-login", response_model=EmailLoginResponse)
 async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
     """
-    Email login - generate invitation code and send via email
+    Email login - generate verification code and send via email
     
     Args:
         data (EmailLoginRequest): Contains the email address
@@ -165,51 +154,44 @@ async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
         email = data.email
         expiry_minutes = settings.EMAIL_LOGIN_EXPIRE_TIME
         
-        # Generate unique invitation code
-        invitation_code = generate_unique_invitation_code()
+        # Generate unique verification code (using invitation code generator)
+        verification_code = generate_unique_invitation_code()
         
-        # Save to database
-        create_invitation_code_in_db(invitation_code, expiry_minutes)
-        
-        # Create or update email user record
-        with Session(engine) as session:
-            email_user = session.get(EmailUser, email)
-            if email_user:
-                # Update existing user
-                email_user.invitation_code = invitation_code
-                email_user.code_generated_at = datetime.datetime.now()
-                email_user.code_expires_at = datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes)
-                email_user.last_login = datetime.datetime.now()
-            else:
-                # Create new email user
-                email_user = EmailUser(
-                    email=email,
-                    invitation_code=invitation_code,
-                    code_generated_at=datetime.datetime.now(),
-                    code_expires_at=datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes),
-                    created_at=datetime.datetime.now(),
-                    last_login=datetime.datetime.now()
-                )
-            
-            session.add(email_user)
-            session.commit()
+        # Create or update user record
+        user = UserService.get_user_by_email(email)
+        if user:
+            # Update existing user with verification code
+            UserService.set_email_verification_code(
+                user.user_id, 
+                verification_code, 
+                datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes)
+            )
+            UserService.update_last_login(user.user_id)
+        else:
+            # Create new user with email authentication
+            user = UserService.create_user_with_email(email)
+            UserService.set_email_verification_code(
+                user.user_id,
+                verification_code,
+                datetime.datetime.now() + datetime.timedelta(minutes=expiry_minutes)
+            )
         
         # Create subscriber in Listmonk if needed
         await listmonk_utils.create_subscriber_if_not_exists(email)
         
-        # Send invitation code email
+        # Send verification code email
         email_sent = await listmonk_utils.send_invitation_code_email(
             recipient_email=email,
-            invitation_code=invitation_code,
+            invitation_code=verification_code,
             expiry_minutes=expiry_minutes
         )
         
         if not email_sent:
-            raise AuthException(500, "Failed to send invitation email")
+            raise AuthException(500, "Failed to send verification email")
         
         return EmailLoginResponse(
             success=True,
-            message=f"Invitation code sent to {email}. Please check your email.",
+            message=f"Verification code sent to {email}. Please check your email.",
             expires_in_minutes=expiry_minutes
         )
         
@@ -222,7 +204,7 @@ async def email_login(data: EmailLoginRequest) -> EmailLoginResponse:
 @router.post("/email-login-form", response_model=EmailLoginResponse)
 async def email_login_form(emailAddress: str = Form(...)) -> EmailLoginResponse:
     """
-    Email login via form data - generate invitation code and send via email
+    Email login via form data - generate verification code and send via email
     
     Args:
         emailAddress (str): Email address from form data
@@ -233,3 +215,42 @@ async def email_login_form(emailAddress: str = Form(...)) -> EmailLoginResponse:
     # Create a request object to reuse existing logic
     email_request = EmailLoginRequest(emailAddress=emailAddress)
     return await email_login(email_request)
+
+
+@router.post("/email-verify")
+async def email_verify(email: str = Form(...), verification_code: str = Form(...)):
+    """
+    Verify email with verification code and return JWT token
+    
+    Args:
+        email (str): User email address
+        verification_code (str): Verification code sent via email
+        
+    Returns:
+        dict: Response containing access token if verification is successful
+    """
+    try:
+        user = UserService.get_user_by_email(email)
+        if not user:
+            raise AuthException(404, "User not found")
+        
+        # Verify the email with the verification code
+        if UserService.verify_email(user.user_id, verification_code):
+            # Update last login
+            UserService.update_last_login(user.user_id)
+            
+            # Generate JWT token
+            access_token = jwt_utils.generate_token({"email": email, "user_id": user.user_id})
+            
+            return {
+                "success": True,
+                "access_token": access_token,
+                "message": "Email verified successfully"
+            }
+        else:
+            raise AuthException(401, "Invalid or expired verification code")
+            
+    except AuthException:
+        raise
+    except Exception as e:
+        raise AuthException(500, f"An error occurred during email verification: {str(e)}")

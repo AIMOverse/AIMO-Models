@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.exceptions.jwt_exceptions import JWTException
 from app.utils.jwt_utils import JWTUtils
-from app.entity.WalletAccount import WalletAccount
+from app.entity.User import User
 from app.entity.invitation_code import InvitationCode
 from app.core.db import engine  # Adjusted import path for the database engine
 
@@ -52,22 +52,24 @@ class JWTMiddleware(BaseHTTPMiddleware):
             # Check if the token contains a wallet address
             wallet_address = payload.get("wallet_address")
             if wallet_address:
-                # Verify if the wallet is registered with a valid invitation code
+                # Verify if the wallet is registered with a valid invitation code (User entity)
                 with Session(engine) as session:
-                    wallet_account = session.get(WalletAccount, wallet_address)
-                    if not wallet_account:
+                    user = session.exec(
+                        User.__table__.select().where(User.wallet_address == wallet_address)
+                    ).first()
+                    if not user:
                         return JSONResponse(
                             status_code=401,
                             content={"message": "Wallet not registered"}
                         )
-                    
                     # Check if the bound invitation code is expired
-                    invitation_code = session.get(InvitationCode, wallet_account.invitation_code)
-                    if not invitation_code or invitation_code.expiration_time < datetime.datetime.now():
-                        return JSONResponse(
-                            status_code=401,
-                            content={"message": "Bound invitation code has expired"}
-                        )
+                    if user.invitation_code:
+                        invitation_code = session.get(InvitationCode, user.invitation_code)
+                        if not invitation_code or invitation_code.expiration_time < datetime.datetime.now():
+                            return JSONResponse(
+                                status_code=401,
+                                content={"message": "Bound invitation code has expired"}
+                            )
             
             # Compatibility check for old invitation code tokens
             elif "InvitationCode" in payload:
