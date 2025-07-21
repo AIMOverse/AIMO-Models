@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import chat, emo, auth, invitation_code, user_survey, system_prompt
+from app.api.routes import chat, emo, auth, invitation_code, user_survey, system_prompt, user
 
 """
 Author: Jack Pan, Wesley Xu
@@ -20,3 +20,4 @@ api_router.include_router(user_survey.router, prefix="/survey",
                           tags=["survey"])  # User survey router
 api_router.include_router(system_prompt.router, prefix="/system-prompt",
                           tags=["system_prompt"])  # System prompt router
+api_router.include_router(user.router, prefix="/user", tags=["user"])  # User token limit router

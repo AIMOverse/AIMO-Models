@@ -18,6 +18,8 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
+    # Daily token limit for each user
+    DAILY_TOKEN_LIMIT: int = 10000
     version: str = "1.0.0"  # Version of the API
     BASE_URL: str = f"/api/v{version}"  # Path to the base API
     ENVIRONMENT: Literal[
